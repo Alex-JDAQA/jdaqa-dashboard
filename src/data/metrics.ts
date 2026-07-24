@@ -220,16 +220,16 @@ export const qaIssueThroughputSummary = {
 };
 
 export const manualCoverageSummary = {
-  testRepositoryTotal: 952,
+  testRepositoryTotal: 955,
   sprintTestingCases: 100,
-  totalFormalTestCases: 952 - 100,
+  totalFormalTestCases: 955 - 100,
   youConnectCoreWorkflows: 147,
   preconditions: 26,
   reportingMicroservice: 455,
   vendorManagement: 69,
   vendorCircle: 92,
-  aiReviewForms: 59,
-  functionalTestingTotal: 848,
+  aiReviewForms: 62,
+  functionalTestingTotal: 851,
 };
 
 /** Year-to-date KPIs — primary leadership view for Ed */
@@ -704,8 +704,9 @@ export const projectCoverageKpis: ProjectCoverageKpi[] = [
     overallCoveragePercent: 70,
     manualCoveragePercent: 70,
     automationCoveragePercent: 0,
-    testCases: 9,
-    highlight: "AI Review workflow covered via YP-1653 path.",
+    testCases: 62,
+    highlight:
+      "62 manual cases across Order Parachute, One Step Process, Template Editor Regression, and ARF tickets.",
     automationNote: "Broader automation coverage still outstanding.",
   },
 ];

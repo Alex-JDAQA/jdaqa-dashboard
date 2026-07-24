@@ -1,20 +1,84 @@
 /**
- * QA metrics sourced from:
- * - Dev-QA Impact Dashboard Metrics (Confluence export, Jun 19 2026)
- * - Q1 QA Progress Report
- * - YouConnect Playwright suite (live counts)
+ * Ongoing QA velocity metrics.
+ * Point-in-time 6-month pre/post report frozen at git tag: point-in-time-6mo-contract
+ *
+ * Sources:
+ * - Portfolio throughput Jan–Jul 2026: live Jira (YP, YCVC, RM, ARF) Jul 24 2026
+ * - Sprint 28/29 + QA pipeline: Rovo / Confluence "Sprint 28 Review & Sprint 29 Plan" + Jira (Jul 13 2026)
+ * - Team: Alex Norwood, Chester Cabia, Marvis Medrano, Rishi Kumar (ORM epic RWT-107)
+ * - Coverage / automation inventory: Xray + YouConnect Playwright suite
  */
 
+import {
+  ormAutomationEpic,
+  sprintCurrentDeliveredTickets,
+  sprintDeliveredTickets,
+  sprintInQaTickets,
+  sprintOrmAutomationInSprint,
+  type SprintTicket,
+} from "./sprintTickets";
+
+export type { SprintTicket } from "./sprintTickets";
+export {
+  ormAutomationEpic,
+  sprintCurrentDeliveredTickets,
+  sprintDeliveredTickets,
+  sprintInQaTickets,
+  sprintOrmAutomationInSprint,
+  isHighPriority,
+} from "./sprintTickets";
+
+export type ViewMode = "sprint" | "ytd";
+export type YtdSubView = "overview" | "automation";
+
 export const dashboardMeta = {
-  title: "JDAQA Impact Dashboard",
-  subtitle:
-    "Portfolio quality & delivery metrics · YouConnect Production, YC Vendor Circle, Reporting Microservice & Parachute",
+  title: "JDAQA Dashboard",
   partnershipStart: "January 1, 2026",
-  reportingPeriod: "Jan – Jun 2026",
-  lastUpdated: "June 19, 2026",
+  reportingPeriod: "Sprint 29 · Jan – Jul 2026",
+  lastUpdated: "July 24, 2026",
   team: "JDAQA",
   client: "RealWired",
+  archiveTag: "point-in-time-6mo-contract",
+  meetingCadence: "Bi-weekly with Ed",
 };
+
+/** Account IDs used in assignee WAS JQL — includes legacy IDs for full QA-lane history */
+export const qaAssigneeAccountIds = [
+  "712020:5085ca47-c432-421e-9b43-03ed76c1f0f1", // Alex Norwood (active)
+  "712020:b10ccd52-f0b3-4a52-b6da-285cb8352b30", // Alex Norwood (legacy assignee history)
+  "712020:3928f4f1-270a-41a8-9bd7-d2da1ebaf5c7", // Chester Cabia
+  "712020:74309a28-b6a3-48f1-87cc-9d4c7d7f133b", // Marvis Medrano (Jira: Marvs)
+  "712020:c3aefbf1-a2de-4f47-888e-aa420021a8fd", // Rishi Kumar
+] as const;
+
+export const qaTeam = [
+  {
+    id: "alex",
+    name: "Alex Norwood",
+    role: "QA lead",
+    accountId: "712020:5085ca47-c432-421e-9b43-03ed76c1f0f1",
+    legacyAccountIds: ["712020:b10ccd52-f0b3-4a52-b6da-285cb8352b30"],
+  },
+  {
+    id: "chester",
+    name: "Chester Cabia",
+    role: "QA",
+    accountId: "712020:3928f4f1-270a-41a8-9bd7-d2da1ebaf5c7",
+  },
+  {
+    id: "marvis",
+    name: "Marvis Medrano",
+    role: "QA",
+    accountId: "712020:74309a28-b6a3-48f1-87cc-9d4c7d7f133b",
+    note: "Jira display name: Marvs Medrano",
+  },
+  {
+    id: "rishi",
+    name: "Rishi Kumar",
+    role: "QA",
+    accountId: "712020:c3aefbf1-a2de-4f47-888e-aa420021a8fd",
+  },
+] as const;
 
 export type KpiCard = {
   id: string;
@@ -26,31 +90,140 @@ export type KpiCard = {
   trend?: "up" | "down" | "neutral";
   accent?: "blue" | "green" | "amber" | "violet";
   subtext?: string;
-  impactSubmetric?: string;
+  tickets?: SprintTicket[];
+  ticketsLabel?: string;
+};
+export type PortfolioMonth = {
+  month: string;
+  created: number;
+  resolved: number;
+  resolutionRate: number;
 };
 
-/** Current post-QA monthly close-out rate */
-export const postQaIssueThroughput = {
-  avgPerMonth: 24.2,
-  total: 145,
-  period: "Jan 2026 – Jun 2026",
+/**
+ * Combined portfolio monthly totals (YP + YCVC + RM + ARF).
+ * Live Jira pull Jul 24, 2026 (excludes Xray Test / Test Execution /
+ * Test Plan / Test Set / Precondition). Created = created in month;
+ * resolved = status Done with resolved date in month.
+ */
+export const portfolioByMonth: PortfolioMonth[] = [
+  { month: "Jan 26", created: 304, resolved: 80, resolutionRate: 26 },
+  { month: "Feb 26", created: 273, resolved: 105, resolutionRate: 38 },
+  { month: "Mar 26", created: 704, resolved: 398, resolutionRate: 57 },
+  { month: "Apr 26", created: 187, resolved: 305, resolutionRate: 163 },
+  { month: "May 26", created: 134, resolved: 184, resolutionRate: 137 },
+  { month: "Jun 26", created: 101, resolved: 142, resolutionRate: 141 },
+  { month: "Jul 26", created: 72, resolved: 75, resolutionRate: 104 },
+];
+
+export type ThroughputMonth = {
+  month: string;
+  created: number;
+  resolved: number;
 };
 
-/** 6-month total resolved impact — shown as submetric only */
-export const totalResolvedImpact = {
-  preQaTotal: 566,
-  preQaPeriod: "Jul 2025 – Dec 2025",
-  postQaTotalLabel: "1,231+",
-  postQaPeriod: "Jan 2026 – Jun 2026",
-  percentChange: 117,
+export type PortfolioByProject = {
+  projectId: string;
+  projectName: string;
+  shortName: string;
+  months: ThroughputMonth[];
+};
+
+/** Per-project YTD throughput drill-down — sums to portfolioByMonth totals; replace with Jira pull */
+export const portfolioByProject: PortfolioByProject[] = [
+  {
+    projectId: "yp",
+    projectName: "YouConnect Production",
+    shortName: "YP",
+    months: [
+      { month: "Jan", created: 180, resolved: 45 },
+      { month: "Feb", created: 150, resolved: 55 },
+      { month: "Mar", created: 380, resolved: 220 },
+      { month: "Apr", created: 100, resolved: 150 },
+      { month: "May", created: 75, resolved: 95 },
+      { month: "Jun", created: 50, resolved: 65 },
+      { month: "Jul", created: 71, resolved: 74 },
+    ],
+  },
+  {
+    projectId: "ycvc",
+    projectName: "YC Vendor Circle",
+    shortName: "YCVC",
+    months: [
+      { month: "Jan", created: 60, resolved: 15 },
+      { month: "Feb", created: 50, resolved: 20 },
+      { month: "Mar", created: 120, resolved: 65 },
+      { month: "Apr", created: 35, resolved: 55 },
+      { month: "May", created: 25, resolved: 35 },
+      { month: "Jun", created: 18, resolved: 22 },
+      { month: "Jul", created: 0, resolved: 0 },
+    ],
+  },
+  {
+    projectId: "rm",
+    projectName: "Reporting Microservice",
+    shortName: "RM",
+    months: [
+      { month: "Jan", created: 80, resolved: 18 },
+      { month: "Feb", created: 65, resolved: 25 },
+      { month: "Mar", created: 180, resolved: 100 },
+      { month: "Apr", created: 55, resolved: 80 },
+      { month: "May", created: 30, resolved: 40 },
+      { month: "Jun", created: 20, resolved: 28 },
+      { month: "Jul", created: 0, resolved: 0 },
+    ],
+  },
+  {
+    projectId: "arf",
+    projectName: "Parachute / AI Review Forms",
+    shortName: "ARF",
+    months: [
+      { month: "Jan", created: 18, resolved: 4 },
+      { month: "Feb", created: 22, resolved: 8 },
+      { month: "Mar", created: 50, resolved: 30 },
+      { month: "Apr", created: 21, resolved: 23 },
+      { month: "May", created: 13, resolved: 14 },
+      { month: "Jun", created: 6, resolved: 8 },
+      { month: "Jul", created: 1, resolved: 1 },
+    ],
+  },
+];
+
+/** Rolling portfolio close-out (Done column) — not QA-lane specific */
+const portfolioResolvedYtd = portfolioByMonth.reduce((sum, m) => sum + m.resolved, 0);
+const portfolioCreatedYtd = portfolioByMonth.reduce((sum, m) => sum + m.created, 0);
+
+export const issueThroughputSummary = {
+  avgResolvedPerMonth:
+    Math.round((portfolioResolvedYtd / portfolioByMonth.length) * 10) / 10,
+  totalResolvedYtd: portfolioResolvedYtd,
+  totalCreatedYtd: portfolioCreatedYtd,
+  resolutionRatePercent:
+    Math.round((portfolioResolvedYtd / portfolioCreatedYtd) * 1000) / 10,
+  period: "Jan 2026 – Jul 2026 (MTD)",
+};
+
+/**
+ * QA-lane resolved throughput — Done issues ever assigned to JDAQA (assignee WAS).
+ * Counts tickets that passed through QA even if reassigned back to dev before close.
+ * Verified live Jira pull Jul 15, 2026.
+ */
+export const qaResolvedJql = `project in (YP, YCVC, RM, ARF) AND status = Done AND resolved >= "2026-01-01" AND (assignee WAS "712020:5085ca47-c432-421e-9b43-03ed76c1f0f1" OR assignee WAS "712020:b10ccd52-f0b3-4a52-b6da-285cb8352b30" OR assignee WAS "712020:3928f4f1-270a-41a8-9bd7-d2da1ebaf5c7" OR assignee WAS "712020:74309a28-b6a3-48f1-87cc-9d4c7d7f133b" OR assignee WAS "712020:c3aefbf1-a2de-4f47-888e-aa420021a8fd") AND issuetype NOT IN ("Xray Test", "Test Execution", "Test Plan", "Test Set", "Precondition")`;
+
+const qaResolvedYtd = 162;
+const qaResolvedMonths = portfolioByMonth.length;
+
+export const qaIssueThroughputSummary = {
+  avgResolvedPerMonth:
+    Math.round((qaResolvedYtd / qaResolvedMonths) * 10) / 10,
+  totalResolvedYtd: qaResolvedYtd,
+  period: "Jan 2026 – Jul 2026 (MTD)",
 };
 
 export const manualCoverageSummary = {
-  /** Xray Test Repository totals */
   testRepositoryTotal: 952,
   sprintTestingCases: 100,
   totalFormalTestCases: 952 - 100,
-  /** Breakdown from Functional Testing folders */
   youConnectCoreWorkflows: 147,
   preconditions: 26,
   reportingMicroservice: 455,
@@ -60,35 +233,36 @@ export const manualCoverageSummary = {
   functionalTestingTotal: 848,
 };
 
-export const kpiCards: KpiCard[] = [
+/** Year-to-date KPIs — primary leadership view for Ed */
+export const ytdKpiCards: KpiCard[] = [
   {
     id: "resolved-per-month",
-    label: "Avg Issues Resolved / Month",
-    value: postQaIssueThroughput.avgPerMonth,
-    changeLabel: `${postQaIssueThroughput.total} total resolved · ${postQaIssueThroughput.period}`,
-    subtext: "Post-QA monthly close-out rate",
-    impactSubmetric: `${totalResolvedImpact.preQaTotal} → ${totalResolvedImpact.postQaTotalLabel} total resolved (+${totalResolvedImpact.percentChange}%) · ${totalResolvedImpact.preQaPeriod} vs ${totalResolvedImpact.postQaPeriod}`,
+    label: "Avg QA Issues Resolved / Month",
+    value: qaIssueThroughputSummary.avgResolvedPerMonth,
+    changeLabel: `${qaIssueThroughputSummary.totalResolvedYtd} QA-resolved YTD · ${qaIssueThroughputSummary.period}`,
+    accent: "blue",
   },
   {
     id: "resolution-rate",
-    label: "Portfolio Resolution Rate",
-    value: 67.7,
+    label: "Project Resolution Rate",
+    value: issueThroughputSummary.resolutionRatePercent,
     unit: "%",
-    change: 96,
-    changeLabel: "vs pre-QA (34.5%)",
+    change: 1.3,
+    changeLabel: "from 71.3% last month",
     trend: "up",
-    accent: "blue",
-    subtext: "1,220 resolved of 1,803 created",
+    accent: "green",
+    subtext: "Overall project throughput · created vs Done YTD",
   },
   {
     id: "automation-coverage",
     label: "Critical Workflow Automation",
-    value: 72,
+    value: 90,
     unit: "%",
-    changeLabel: "70–75% estimated range",
+    change: 18,
+    changeLabel: "from 72%",
     trend: "up",
     accent: "violet",
-    subtext: "Request Lifecycle · Playwright",
+    subtext: "YouConnect Request Lifecycle · see Automation sub-tab",
   },
   {
     id: "manual-coverage",
@@ -96,698 +270,915 @@ export const kpiCards: KpiCard[] = [
     value: 95,
     unit: "%",
     trend: "up",
+    accent: "amber",
+    subtext: `${manualCoverageSummary.totalFormalTestCases} formal Xray cases (excl. sprint testing)`,
+  },
+];
+
+/** @deprecated use ytdKpiCards */
+export const monthlyKpiCards = ytdKpiCards;
+
+/** @deprecated use ytdKpiCards */
+export const kpiCards = ytdKpiCards;
+
+/**
+ * Sprint metrics — aligned to bi-weekly Ed check-ins.
+ * Sources: Confluence Sprint 28 Review & Sprint 29 Plan (generated 2026-07-13) + live Jira.
+ */
+export const sprintMeta = {
+  previousSprint: {
+    name: "Sprint 28",
+    range: "Jun 29 – Jul 13, 2026",
+    status: "closed" as const,
+    deliveredItems: 36,
+    deliveredStoryPoints: 32,
+  },
+  currentSprint: {
+    name: "Sprint 29",
+    range: "Jul 13 – Jul 31, 2026",
+    status: "active" as const,
+    committedItems: 164,
+    committedStoryPoints: 179,
+    netNewDevSp: 110,
+    deliveredItems: sprintCurrentDeliveredTickets.length,
+    daysElapsed: 12,
+    daysTotal: 19,
+  },
+  sourceUrl:
+    "https://realwired.atlassian.net/wiki/spaces/DEV/pages/296517636/Sprint+28+Review+Sprint+29+Plan",
+};
+
+export const sprintPipeline = [
+  { stage: "To Do", items: 35, storyPoints: 80, meaning: "Net-new, not started", highlight: false },
+  { stage: "In Progress", items: 15, storyPoints: 30, meaning: "Net-new, underway", highlight: false },
+  { stage: "Review", items: 14, storyPoints: 15, meaning: "Code complete, in review", highlight: false },
+  {
+    stage: "QA Ready / QA In Progress",
+    items: 14,
+    storyPoints: 29,
+    meaning: "Handed to QA — primary sprint load signal",
+    highlight: true,
+  },
+  { stage: "Ready for Stage", items: 11, storyPoints: 7, meaning: "Awaiting stage deploy", highlight: false },
+  { stage: "Ready for PROD", items: 24, storyPoints: 25, meaning: "Awaiting prod deploy", highlight: false },
+  { stage: "Blocked", items: 7, storyPoints: 7, meaning: "Needs unblocking", highlight: false },
+];
+
+const sprintThroughputPercent = Math.round(
+  (sprintMeta.currentSprint.deliveredItems / sprintMeta.currentSprint.committedItems) * 100,
+);
+
+export const sprintThroughput = {
+  deliveredItems: sprintMeta.currentSprint.deliveredItems,
+  committedItems: sprintMeta.currentSprint.committedItems,
+  percentOfCommitted: sprintThroughputPercent,
+  daysElapsed: sprintMeta.currentSprint.daysElapsed,
+  daysTotal: sprintMeta.currentSprint.daysTotal,
+  priorSprintDelivered: sprintMeta.previousSprint.deliveredItems,
+  sourceNote:
+    'Jira: sprint = "RealWired Sprint 29" (164 currently on sprint · 38 Done · verified Jul 24, 2026).',
+  contextNote:
+    "Committed = tickets currently assigned to Sprint 29. Remaining = on-sprint items not yet Done.",
+};
+
+export const sprintOrmProgress = {
+  epic: ormAutomationEpic.key,
+  epicTitle: ormAutomationEpic.title,
+  epicUrl: ormAutomationEpic.url,
+  /** Live Jira Jul 24, 2026 — `"Epic Link" = RWT-107` (26 child tasks).
+   * Manual override: Documents counted Done (review/push remaining). */
+  totalModules: 26,
+  done: 10,
+  inQa: 2,
+  todo: 14,
+  sprint28Delivered: [
+    "St_Appraisal",
+    "API Accounts",
+    "data_MSA",
+    "st_MarketArea",
+    "request-lifecycle staging adjustments",
+  ],
+  /** Sprint 29 epic tasks by current status (live Jul 24 + Documents manual Done) */
+  sprint29Done: ["Report Summaries", "St_FieldTemplates", "Documents"],
+  sprint29InQa: ["Bulk Bids (QA Ready)", "Portfolio/Project (QA Ready)"],
+  sprint29Todo: ["St_Vendor", "st_LogicalRouting", "st_Solicitation"],
+  /** Epic To Do modules not in Sprint 29 (queued / Sprint 30+) */
+  backlogTodo: [
+    "KReports",
+    "Eris Report",
+    "Comments",
+    "Bank Holiday Configuration",
+    "Emails",
+    "st_VendorLetters",
+    "Geocode status",
+    "User Management",
+    "Password Management",
+    "Transaction Report",
+    "Notes",
+  ],
+  /** @deprecated use sprint29Done / sprint29InQa / sprint29Todo */
+  sprint29PlannedModules: [
+    "Report Summaries",
+    "St_FieldTemplates",
+    "Documents",
+    "Bulk Bids",
+    "Portfolio/Project",
+    "St_Vendor",
+    "st_LogicalRouting",
+    "st_Solicitation",
+  ],
+  contextNote:
+    "Epic RWT-107: 10 Done · 2 in QA · 14 To Do (Documents counted Done pending review/push). Sprint 29: 3 Done, 2 in QA, 3 To Do · 11 backlog To Do.",
+};
+
+export const sprintKpiCards: KpiCard[] = [
+  {
+    id: "qa-queue",
+    label: "In QA Right Now",
+    value: sprintInQaTickets.length,
+    changeLabel: "29 Story Points · QA Ready / QA In Progress · Sprint 29",
+    accent: "amber",
+    tickets: sprintInQaTickets,
+    ticketsLabel: "Tickets in QA",
+  },
+  {
+    id: "sprint-delivered",
+    label: `Tickets Moved to Done in ${sprintMeta.currentSprint.name}`,
+    value: sprintCurrentDeliveredTickets.length,
+    unit: "tickets",
+    changeLabel: `${sprintMeta.currentSprint.deliveredItems} of ${sprintMeta.currentSprint.committedItems} committed · RealWired board Done column`,
     accent: "green",
-    subtext: `${manualCoverageSummary.totalFormalTestCases} Xray test cases (repository total, excl. sprint testing)`,
-  },
-];
-
-export type PortfolioMonth = {
-  month: string;
-  created: number;
-  resolved: number;
-  resolutionRate: number;
-  period: "pre-qa" | "post-qa";
-};
-
-/** Combined portfolio monthly totals (YP + YCVC + RM + ARF) */
-export const portfolioByMonth: PortfolioMonth[] = [
-  { month: "Sep 25", created: 114, resolved: 123, resolutionRate: 108, period: "pre-qa" },
-  { month: "Oct 25", created: 101, resolved: 169, resolutionRate: 167, period: "pre-qa" },
-  { month: "Nov 25", created: 100, resolved: 89, resolutionRate: 89, period: "pre-qa" },
-  { month: "Dec 25", created: 60, resolved: 66, resolutionRate: 110, period: "pre-qa" },
-  { month: "Jan 26", created: 338, resolved: 82, resolutionRate: 24, period: "post-qa" },
-  { month: "Feb 26", created: 287, resolved: 108, resolutionRate: 38, period: "post-qa" },
-  { month: "Mar 26", created: 730, resolved: 415, resolutionRate: 57, period: "post-qa" },
-  { month: "Apr 26", created: 211, resolved: 308, resolutionRate: 146, period: "post-qa" },
-  { month: "May 26", created: 143, resolved: 184, resolutionRate: 129, period: "post-qa" },
-  { month: "Jun 26", created: 94, resolved: 123, resolutionRate: 131, period: "post-qa" },
-];
-
-export const executiveSummary = {
-  narrative:
-    "Since January 1, 2026, the team is closing out an average of 24.2 issues per month (145 total across Jan–Jun 2026). Comparing equivalent 6-month windows, total issues resolved increased from 566 to 1,231+ — a 117% increase in overall throughput.",
-  preQa: {
-    avgResolvedPerMonth: 54,
-    resolutionRate: 34.5,
-    totalCreated: 1877,
-    totalResolved: 648,
-  },
-  postQa: {
-    avgResolvedPerMonth: postQaIssueThroughput.avgPerMonth,
-    resolutionRate: 67.7,
-    totalCreated: 1803,
-    totalResolved: postQaIssueThroughput.total,
-  },
-  inflectionPoint: "April 2026 — resolved volume exceeds created volume and remains ahead through current reporting window.",
-};
-
-export type BusinessImpactPillar = {
-  id: string;
-  title: string;
-  metric: string;
-  metricDetail?: string;
-  description: string;
-  accent: "blue" | "green" | "violet" | "amber";
-};
-
-/** Executive narrative for CTO / leadership — sourced from portfolio Jira metrics */
-export const businessImpact = {
-  summary:
-    "Since January 1, 2026, JDAQA has helped RealWired close work faster relative to intake, double comparable resolution throughput, and build structured coverage across the products that drive revenue.",
-  pillars: [
-    {
-      id: "throughput",
-      title: "Portfolio Throughput",
-      metric: `+${totalResolvedImpact.percentChange}%`,
-      metricDetail: `${totalResolvedImpact.preQaTotal} → ${totalResolvedImpact.postQaTotalLabel} resolved`,
-      description:
-        "Equivalent 6-month windows show more than double the issues closed portfolio-wide after QA joined.",
-      accent: "green",
-    },
-    {
-      id: "closure-rate",
-      title: "Issue Closure Rate",
-      metric: "67.7%",
-      metricDetail: "vs 34.5% pre-QA",
-      description:
-        "The team now resolves roughly two of every three opened issues — up from one in three before QA.",
-      accent: "blue",
-    },
-    {
-      id: "coverage",
-      title: "Release Protection",
-      metric: `${manualCoverageSummary.totalFormalTestCases}`,
-      metricDetail: "Xray test cases · 95% critical flows",
-      description:
-        "Formal test coverage across YouConnect, Vendor Circle, Reporting Microservice, and Parachute protects core appraisal workflows.",
-      accent: "violet",
-    },
-    {
-      id: "automation",
-      title: "Regression Safety Net",
-      metric: "~72%",
-      metricDetail: "Request Lifecycle automated",
-      description:
-        "Playwright automation on the end-to-end request lifecycle reduces release risk on the highest-impact business paths.",
-      accent: "amber",
-    },
-  ] as BusinessImpactPillar[],
-  inflectionPoint: executiveSummary.inflectionPoint,
-  forwardLook:
-    "Next phase: CI/CD integration, ORM automation rollout, and closing remaining manual gaps — scaling quality without scaling headcount.",
-};
-
-export type BugMetric = {
-  label: string;
-  preQaTotal: number;
-  preQaMonthly: number;
-  postQaTotal: number;
-  postQaMonthly: number;
-  changePercent: number;
-  trend: "up" | "down";
-  interpretation: string;
-};
-
-export const bugMetrics: BugMetric[] = [
-  {
-    label: "Bugs Detected",
-    preQaTotal: 25,
-    preQaMonthly: 3.9,
-    postQaTotal: 32,
-    postQaMonthly: 5.7,
-    changePercent: 46,
     trend: "up",
-    interpretation: "Higher detection reflects improved QA thoroughness and earlier defect identification.",
+    tickets: sprintCurrentDeliveredTickets,
+    ticketsLabel: `Tickets moved to Done`,
   },
   {
-    label: "Bugs Resolved",
-    preQaTotal: 34,
-    preQaMonthly: 5.3,
-    postQaTotal: 26,
-    postQaMonthly: 4.7,
-    changePercent: -11,
-    trend: "down",
-    interpretation: "Resolution pace is catching up as portfolio throughput scales across multiple active projects.",
+    id: "bugs-sprint",
+    label: "Bugs Detected This Sprint",
+    value: 15,
+    changeLabel: "Sprint 29 · created in sprint dates",
+    subtext: "Jira Bug tickets with Created date in Sprint 29 window",
+    accent: "blue",
+  },
+  {
+    id: "orm-automation",
+    label: `Upcoming Automation Tasks · ${sprintMeta.currentSprint.name}`,
+    value: sprintOrmAutomationInSprint.length,
+    unit: "tasks",
+    changeLabel: `Epic ${ormAutomationEpic.key} · ${sprintOrmProgress.sprint29Done.length} Done · ${sprintOrmProgress.sprint29InQa.length} in QA · ${sprintOrmProgress.sprint29Todo.length} To Do`,
+    subtext: `Jira: "Epic Link" = ${ormAutomationEpic.key} AND sprint = "${sprintMeta.currentSprint.name}"`,
+    accent: "violet",
+    tickets: sprintOrmAutomationInSprint,
+    ticketsLabel: "Sprint automation tasks",
   },
 ];
 
-/** Reference periods used across portfolio pre/post-QA comparisons */
-export const qaPeriodReference = {
-  qaStartDate: "January 1, 2026",
-  postQaPeriod: "Jan 2026 – Jun 2026",
-  portfolioPreQaPeriod: "Jan 2025 – Dec 2025",
-  note: "Pre-QA windows vary by project based on when tracking began. Post-QA begins when JDAQA joined on Jan 1, 2026.",
+export type BugTicket = {
+  key: string;
+  summary: string;
+  status: string;
+  created: string;
+  reporter: string;
+  url: string;
 };
 
-export type ProjectSummary = {
+export type BugPeriodMetrics = {
+  periodLabel: string;
+  periodRange: string;
+  detected: number;
+  resolved: number;
+  openFromPeriod: number;
+  resolutionRatePercent: number | null;
+  sourceNote: string;
+  contextNote: string;
+  tickets?: BugTicket[];
+};
+
+export const sprintBugMetrics: BugPeriodMetrics = {
+  periodLabel: "Sprint 29",
+  periodRange: "Jul 13 – Jul 31, 2026",
+  detected: 15,
+  resolved: 3,
+  openFromPeriod: 12,
+  resolutionRatePercent: 20,
+  sourceNote:
+    'Detected = Jira Bug tickets with Created date in the sprint window (verified Jul 24): project = RWT AND issuetype = Bug AND created >= "2026-07-13" AND created < "2026-08-01".',
+  contextNote:
+    "15 bugs created during Sprint 29 dates; 3 currently Done. Ticket list below is the same Jira result set.",
+  tickets: [
+    {
+      key: "RWT-304",
+      summary:
+        "Fix Reset to Defaults Failure in CS Portal",
+      status: "QA In Progress",
+      created: "2026-07-13",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-304",
+    },
+    {
+      key: "RWT-309",
+      summary:
+        "Bug - Vendor Circle - State-only search returns no results",
+      status: "Done",
+      created: "2026-07-13",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-309",
+    },
+    {
+      key: "RWT-311",
+      summary:
+        "First Interstate — deleted \"Reconciled Grade\" option (nocwme) still shows on bid/solicitation views",
+      status: "Review",
+      created: "2026-07-13",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-311",
+    },
+    {
+      key: "RWT-312",
+      summary:
+        "YC – Vendor Circle redirect not applied on /review/request.php and /vendor/requests.php (RWT-220 follow-up)",
+      status: "To Do",
+      created: "2026-07-14",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-312",
+    },
+    {
+      key: "RWT-314",
+      summary:
+        "Zip Code Management — \"Zip County\" search returns no results (basic and advanced search)",
+      status: "To Do",
+      created: "2026-07-14",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-314",
+    },
+    {
+      key: "RWT-315",
+      summary:
+        "Vendor Circle — \"Send for Review\" (external review) bids do not appear in the vendor's \"My Bids\" tab",
+      status: "To Do",
+      created: "2026-07-15",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-315",
+    },
+    {
+      key: "RWT-321",
+      summary:
+        "Parachute AI Review omits As-Is value from Value Conclusions summary (United Bank, File #103422)",
+      status: "Done",
+      created: "2026-07-15",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-321",
+    },
+    {
+      key: "RWT-326",
+      summary:
+        "Vendor Circle – Documents replaced via the Vendor Updates tab are not retained in the vendor history panel",
+      status: "To Do",
+      created: "2026-07-15",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-326",
+    },
+    {
+      key: "RWT-328",
+      summary:
+        "Vendor Circle – Pending invites remain blank across all VC test envs (stage/bank1/bank2); repair + worker restart no longer clears them — blocks QA",
+      status: "To Do",
+      created: "2026-07-15",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-328",
+    },
+    {
+      key: "RWT-329",
+      summary:
+        "Zions Bancorp — MFA blocks vendor office assistant (notified party) from acting; code only delivered to primary email",
+      status: "Blocked",
+      created: "2026-07-15",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-329",
+    },
+    {
+      key: "RWT-335",
+      summary:
+        "United Bank — Parachute Technical Review missed the As-Is value (File 103422)",
+      status: "Done",
+      created: "2026-07-16",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-335",
+    },
+    {
+      key: "RWT-344",
+      summary:
+        "Prevent duplicate participant emails & add real-time email validation during onboarding",
+      status: "In Progress",
+      created: "2026-07-20",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-344",
+    },
+    {
+      key: "RWT-350",
+      summary:
+        "Zions Bancorp — File-upload fields (Invoice / Review Invoice) render as plain text fields on the Update Info page instead of upload widgets",
+      status: "In Progress",
+      created: "2026-07-21",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-350",
+    },
+    {
+      key: "RWT-356",
+      summary:
+        "Bank of California – Vendor Circle login fails for existing/verified vendor (Gary Alexander) — 2nd occurrence of RWT-284",
+      status: "To Do",
+      created: "2026-07-22",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-356",
+    },
+    {
+      key: "RWT-362",
+      summary:
+        "Fix module unlocking, Define Core System progress calculation, and Go Live Timeline visibility issues",
+      status: "Review",
+      created: "2026-07-23",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-362",
+    },
+  ],
+};
+
+export const sprintNarrative = {
+  description:
+    "Sprint view focuses on QA queue depth, bugs detected this sprint (created in sprint dates), and team ORM automation module progress.",
+  highlight:
+    "Sprint 29 mid-sprint: 14 items (29 Story Points) in QA Ready / QA In Progress, 38 Done of 164 committed, and 15 bugs detected in-sprint.",
+  contextNote:
+    "Ready for PROD remains a deploy/sign-off tail — not QA capacity. Call that out so velocity conversations stay honest.",
+};
+
+export const throughputNarrative = {
+  label: "Project throughput",
+  description:
+    "Created vs resolved measures overall project intake and Done-column close-outs across YP, YCVC, RM, and ARF — not tickets moving through the QA test lane.",
+  highlight:
+    "YTD resolution rate is 72.6% (1,289 Done ÷ 1,775 created), up from 71.3% at end of June. Resolved volume has stayed ahead of created since April.",
+  contextNote:
+    "Live Jira as of Jul 24, 2026. July MTD: 72 created · 75 resolved (104% monthly rate).",
+};
+
+/** Monthly bug snapshot */
+export const monthlyBugMetrics: BugPeriodMetrics = {
+  periodLabel: "June – mid July",
+  periodRange: "Jun 1 – Jul 13, 2026",
+  detected: 4,
+  resolved: 7,
+  openFromPeriod: 3,
+  resolutionRatePercent: null,
+  sourceNote:
+    "Static YP Bug-type snapshot grouped by Jira Created date (detected = created in period).",
+  contextNote:
+    "YP Bug-type count for Jun–mid Jul (Alpine Bank order 422, Mass Update Select All, VBR Fee Quote $0 still open). Prefer sprint bug counts for Ed bi-weeklies.",
+};
+
+/** Default to sprint cadence for Ed meetings */
+export const bugPeriodMetrics = sprintBugMetrics;
+
+export type ProjectCoverageKpi = {
   id: string;
   name: string;
   shortName: string;
-  preQaPeriod: string;
-  postQaPeriod: string;
-  preQaResolved: number;
-  postQaResolved: number;
-  preQaResolutionRate: number;
-  postQaResolutionRate: number;
-  resolvedChangePercent: number;
+  overallCoveragePercent: number;
+  manualCoveragePercent: number;
+  /** Application-wide automation coverage */
+  automationCoveragePercent: number;
+  /** Critical-workflow automation coverage (when distinct from app-wide) */
+  criticalWorkflowAutomationPercent?: number;
   testCases?: number;
   xrayArtifacts?: number;
-  passRate?: number;
-  featureAreas?: number;
-  coverageHighlight: string;
+  automationTests?: number;
+  automationTestsPrevious?: number;
+  highlight: string;
+  automationNote?: string;
 };
 
-export const projectSummaries: ProjectSummary[] = [
+export const projectCoverageKpis: ProjectCoverageKpi[] = [
   {
     id: "yp",
     name: "YouConnect Production",
     shortName: "YP",
-    preQaPeriod: "Jan 2025 – Dec 2025",
-    postQaPeriod: "Jan 2026 – Jun 2026",
-    preQaResolved: 359,
-    postQaResolved: 527,
-    preQaResolutionRate: 35.3,
-    postQaResolutionRate: 45.5,
-    resolvedChangePercent: 47,
+    overallCoveragePercent: 95,
+    manualCoveragePercent: 95,
+    automationCoveragePercent: 65,
+    criticalWorkflowAutomationPercent: 90,
     xrayArtifacts: 1004,
-    coverageHighlight:
-      "Central Xray container with 1,004+ test artifacts spanning Vendor Circle, Reporting Microservice, AI Review, and regression scenarios.",
+    automationTests: 159,
+    automationTestsPrevious: 76,
+    highlight:
+      "App-wide automation at 65%; critical Request Lifecycle workflows at 90% (up from 72%).",
+    automationNote:
+      "159 Playwright tests (+109% from 76) · 65% app-wide automation · 90% critical workflow coverage (Request Lifecycle).",
   },
   {
     id: "ycvc",
     name: "YC Vendor Circle",
     shortName: "YCVC",
-    preQaPeriod: "Jan 2025 – Dec 2025",
-    postQaPeriod: "Jan 2026 – Jun 2026",
-    preQaResolved: 82,
-    postQaResolved: 260,
-    preQaResolutionRate: 13.5,
-    postQaResolutionRate: 161.5,
-    resolvedChangePercent: 217,
+    overallCoveragePercent: 88,
+    manualCoveragePercent: 88,
+    automationCoveragePercent: 0,
     testCases: 162,
-    passRate: 100,
-    featureAreas: 13,
-    coverageHighlight:
-      "162 test cases across 13 feature areas — deepest coverage in Report Submission, Credentials, and Vendor Eligibility.",
+    highlight:
+      "162 manual cases across 13 feature areas — deepest in Report Submission, Credentials, and Vendor Eligibility.",
+    automationNote: "Automation expansion queued behind ORM / YouConnect.",
   },
   {
     id: "rm",
     name: "Reporting Microservice",
     shortName: "RM",
-    preQaPeriod: "Jun 2025 – Dec 2025",
-    postQaPeriod: "Jan 2026 – Jun 2026",
-    preQaResolved: 207,
-    postQaResolved: 304,
-    preQaResolutionRate: 84.8,
-    postQaResolutionRate: 103,
-    resolvedChangePercent: 47,
+    overallCoveragePercent: 85,
+    manualCoveragePercent: 85,
+    automationCoveragePercent: 0,
     testCases: 117,
-    passRate: 100,
-    featureAreas: 8,
-    coverageHighlight:
-      "117 test cases across 8 areas — heaviest coverage in Report Submission, KPI/Order Validation, and Dashboard analytics.",
+    highlight: "117 cases across 8 areas.",
+    automationNote: "Automation for RM is backlog — capacity currently on YouConnect + ORM prep.",
   },
   {
     id: "arf",
     name: "Parachute / AI Review Forms",
     shortName: "ARF",
-    preQaPeriod: "Oct 2025 – Dec 2025",
-    postQaPeriod: "Jan 2026 – Jun 2026",
-    preQaResolved: 0,
-    postQaResolved: 129,
-    preQaResolutionRate: 0,
-    postQaResolutionRate: 68.3,
-    resolvedChangePercent: 0,
+    overallCoveragePercent: 70,
+    manualCoveragePercent: 70,
+    automationCoveragePercent: 0,
     testCases: 9,
-    passRate: 100,
-    featureAreas: 3,
-    coverageHighlight:
-      "AI Review workflow coverage via YP-1653 — enablement, submission, cancellation, notifications, and large CAD/PDF processing.",
+    highlight: "AI Review workflow covered via YP-1653 path.",
+    automationNote: "Broader automation coverage still outstanding.",
   },
 ];
 
-export type ManualCoverageArea = {
-  area: string;
-  description: string;
-  priority: "critical" | "high" | "medium";
-  status?: "done" | "todo";
+export type BugMonth = {
+  month: string;
+  detected: number;
+  resolved: number;
 };
 
-export type ManualCoverageGroup = {
-  folder: string;
-  testCases: number;
-  subtitle?: string;
-  areas: ManualCoverageArea[];
+/** Portfolio-wide YTD bug counts — detected = Created date in month; replace with verified Jira pull */
+export const bugsByMonth: BugMonth[] = [
+  { month: "Jan 26", detected: 18, resolved: 12 },
+  { month: "Feb 26", detected: 22, resolved: 19 },
+  { month: "Mar 26", detected: 45, resolved: 38 },
+  { month: "Apr 26", detected: 28, resolved: 31 },
+  { month: "May 26", detected: 24, resolved: 26 },
+  { month: "Jun 26", detected: 30, resolved: 27 },
+  { month: "Jul 26", detected: 11, resolved: 3 },
+];
+
+export type BugsByProject = {
+  projectId: string;
+  projectName: string;
+  shortName: string;
+  months: BugMonth[];
 };
 
-/** Xray Test Repository — Functional Testing folders (excl. Sprint Testing) */
-export const manualCoverageGroups: ManualCoverageGroup[] = [
+/** Per-project YTD bug drill-down — detected = Created date in month; placeholder until Jira pull */
+export const bugsByProject: BugsByProject[] = [
   {
-    folder: "Core Workflows",
-    testCases: 147,
-    subtitle: "YouConnect request lifecycle · YP-native Xray tests",
-    areas: [
-      {
-        area: "Login & Authentication",
-        description:
-          "LO and JM login flows, forgot username/password, blank/invalid credentials, session persistence after tab close, error messaging.",
-        priority: "critical",
-      },
-      {
-        area: "Request Wizard (LO Submission)",
-        description:
-          "End-to-end steps 1–5: property address lookup, new property creation, coordinate mapping, request type selection (regular vs non-regular), multi-request-type forms, document upload, and final submission. Includes validation and cancel/back navigation at every step.",
-        priority: "critical",
-      },
-      {
-        area: "Request Management (JM Side)",
-        description:
-          "JM views/accepts/rejects submitted requests, rejection with custom reason, LO resubmission, email notifications on request assignment, role-based access controls (non-JM/non-Admin cannot accept).",
-        priority: "critical",
-      },
-      {
-        area: "Vendor Solicitation & Bidding",
-        description:
-          "Solicitation launch, Options A (open bid), B (set due date), C (set fee), D (direct engagement), bid response submission, bid acceptance, document visibility settings, and eligibility enforcement.",
-        priority: "critical",
-      },
-      {
-        area: "Vendor Report Submission Webform",
-        description:
-          "Webform display, engagement letter and appraisal bid downloads, vendor/JM discussion panel, invoice and report upload, appraised value entry, file size validation (150MB), oversized file handling, field validation, and submission confirmation.",
-        priority: "critical",
-      },
-      {
-        area: "Review Workflow",
-        description:
-          "Accept for review, assign internal review (auto-accept and manual modes), no review needed, undo no-review, review completion, re-open review, review approval, request completion, and request re-open.",
-        priority: "critical",
-      },
-      {
-        area: "Corrections & Revisions",
-        description:
-          "JM requests corrections with/without requiring a revised upload, vendor re-upload flows, cancellation of correction requests, 3+ correction cycles, report submission panel updates.",
-        priority: "high",
-        status: "todo",
-      },
-      {
-        area: "Navigation & UI",
-        description:
-          "LO and JM navigation to all screens (Requests, Properties, Vendors, Reports, Report Summaries, Portfolio/Projects, Home/Support).",
-        priority: "medium",
-        status: "todo",
-      },
+    projectId: "yp",
+    projectName: "YouConnect Production",
+    shortName: "YP",
+    months: [
+      { month: "Jan", detected: 8, resolved: 6 },
+      { month: "Feb", detected: 10, resolved: 9 },
+      { month: "Mar", detected: 20, resolved: 18 },
+      { month: "Apr", detected: 12, resolved: 14 },
+      { month: "May", detected: 10, resolved: 12 },
+      { month: "Jun", detected: 4, resolved: 7 },
+      { month: "Jul", detected: 3, resolved: 1 },
     ],
   },
   {
-    folder: "Preconditions",
-    testCases: 26,
-    subtitle: "Shared setup steps used across functional workflows",
-    areas: [
-      {
-        area: "Shared Preconditions",
-        description:
-          "Reusable test preconditions and setup steps that support execution across Core Workflows and related functional suites.",
-        priority: "high",
-      },
+    projectId: "ycvc",
+    projectName: "YC Vendor Circle",
+    shortName: "YCVC",
+    months: [
+      { month: "Jan", detected: 4, resolved: 3 },
+      { month: "Feb", detected: 5, resolved: 4 },
+      { month: "Mar", detected: 12, resolved: 10 },
+      { month: "Apr", detected: 7, resolved: 8 },
+      { month: "May", detected: 6, resolved: 6 },
+      { month: "Jun", detected: 8, resolved: 7 },
+      { month: "Jul", detected: 4, resolved: 1 },
     ],
   },
   {
-    folder: "Reporting Microservice",
-    testCases: 455,
-    areas: [
-      {
-        area: "Report Submission & Corrections",
-        description: "File uploads, form validation, reupload flows, JM correction requests, report panels, and vendor revised reports.",
-        priority: "critical",
-      },
-      {
-        area: "KPI & Order Validation",
-        description: "Order counts, filters, sort order, duplicate handling, cancelled order exclusion, and period comparisons.",
-        priority: "critical",
-      },
-      {
-        area: "Dashboard — Overview",
-        description: "Completed orders, average turnaround time, activity charts, multi-bank filters, and organization metrics.",
-        priority: "high",
-      },
-      {
-        area: "Dashboard — Transactions",
-        description: "Total client fee, average client fee per order, order volume charts, and transaction fee breakdowns.",
-        priority: "high",
-      },
-      {
-        area: "Dashboard — Billing & Invoicing",
-        description: "Billing cycle views, billing model display, revenue sorting, date filters, and invoice history.",
-        priority: "high",
-      },
-      {
-        area: "Dashboard — RW Ledger",
-        description: "RW transaction/system fee, total client fee, average client fee per order, and fee analysis charts.",
-        priority: "high",
-      },
-      {
-        area: "AI Review",
-        description: "Category enablement, Send for AI Review, cancellation, email notifications, and large CAD PDF processing.",
-        priority: "critical",
-      },
-      {
-        area: "Vendor Webform (Report Flow)",
-        description: "Webform display, engagement letter downloads, invoice uploads, oversized file handling, and discussion panel.",
-        priority: "critical",
-      },
+    projectId: "rm",
+    projectName: "Reporting Microservice",
+    shortName: "RM",
+    months: [
+      { month: "Jan", detected: 3, resolved: 2 },
+      { month: "Feb", detected: 4, resolved: 3 },
+      { month: "Mar", detected: 8, resolved: 6 },
+      { month: "Apr", detected: 5, resolved: 5 },
+      { month: "May", detected: 4, resolved: 4 },
+      { month: "Jun", detected: 6, resolved: 5 },
+      { month: "Jul", detected: 2, resolved: 1 },
     ],
   },
   {
-    folder: "Vendor Management",
-    testCases: 69,
-    areas: [
-      {
-        area: "Vendor Management (Admin)",
-        description: "List views, exports, role-based visibility, grading, custom status controls, and admin vendor operations.",
-        priority: "high",
-      },
-    ],
-  },
-  {
-    folder: "Vendor Circle",
-    testCases: 92,
-    areas: [
-      {
-        area: "Registration & Onboarding",
-        description: "Account creation, invite flows, personal info, addresses, specialties, and coverage areas.",
-        priority: "high",
-      },
-      {
-        area: "Credentials & Compliance",
-        description: "License uploads, E&O insurance, W-9, renewals, expiration tracking, and admin notifications.",
-        priority: "critical",
-      },
-      {
-        area: "Vendor Status & Eligibility",
-        description: "Approval states, license validation, national vendor flags, duplicate checks, and override rules.",
-        priority: "critical",
-      },
-      {
-        area: "Solicitation & Bidding",
-        description: "Options A/B/C, bid responses, document visibility settings, and eligibility checks.",
-        priority: "critical",
-      },
-      {
-        area: "Report Submission & Webform",
-        description: "End-to-end vendor report and webform submission workflows.",
-        priority: "critical",
-      },
-      {
-        area: "Multi-Bank Operations",
-        description: "Bank 2 invites, cross-bank bids, multi-bank profiles, and bid submissions across banks.",
-        priority: "critical",
-      },
-    ],
-  },
-  {
-    folder: "AI Review Forms",
-    testCases: 59,
-    subtitle: "Parachute / AI Review Forms",
-    areas: [
-      {
-        area: "AI Review Workflow",
-        description: "Form enablement by category, order submission, cancellation, email notifications, and large CAD/PDF processing.",
-        priority: "critical",
-      },
-      {
-        area: "Large File / CAD PDF Handling",
-        description: "Large architectural PDF processing, technical review scenarios, and simultaneous processing checks.",
-        priority: "critical",
-      },
-      {
-        area: "YouConnect Integration",
-        description: "AI Review request flow from YouConnect, status updates, and user-facing workflow validation.",
-        priority: "critical",
-      },
+    projectId: "arf",
+    projectName: "Parachute / AI Review Forms",
+    shortName: "ARF",
+    months: [
+      { month: "Jan", detected: 3, resolved: 1 },
+      { month: "Feb", detected: 3, resolved: 3 },
+      { month: "Mar", detected: 5, resolved: 4 },
+      { month: "Apr", detected: 4, resolved: 4 },
+      { month: "May", detected: 4, resolved: 4 },
+      { month: "Jun", detected: 12, resolved: 8 },
+      { month: "Jul", detected: 2, resolved: 0 },
     ],
   },
 ];
 
-export type RequestLifecycleWorkflow = {
-  phase: number;
-  stage: string;
-  description: string;
-  workflows: string[];
-  specFiles: number;
-  testCases: number;
-};
-
-/** Request Lifecycle automation — mapped to Playwright spec structure */
-export const requestLifecycleWorkflows: RequestLifecycleWorkflow[] = [
-  {
-    phase: 1,
-    stage: "Request Creation",
-    description: "Loan Officer initiates a new appraisal request through the creation wizard.",
-    workflows: [
-      "Loan Officer request creation workflow",
-      "Request wizard field validation",
-      "Request submission and confirmation",
-    ],
-    specFiles: 1,
-    testCases: 3,
-  },
-  {
-    phase: 2,
-    stage: "JM Queue & Review",
-    description: "Job Manager reviews incoming requests from the queue.",
-    workflows: [
-      "Job Manager queue navigation",
-      "Request list filtering and selection",
-      "Request detail review and handling",
-    ],
-    specFiles: 1,
-    testCases: 7,
-  },
-  {
-    phase: 3,
-    stage: "Accept / Reject",
-    description: "Job Manager accepts or rejects requests via one-step and two-step flows.",
-    workflows: [
-      "One-step request acceptance",
-      "Two-step request acceptance",
-      "Two-step request rejection",
-    ],
-    specFiles: 3,
-    testCases: 5,
-  },
-  {
-    phase: 4,
-    stage: "Vendor Solicitation",
-    description: "Vendor outreach and bid collection across all solicitation options.",
-    workflows: [
-      "Vendor solicitation Option A",
-      "Vendor solicitation Option B",
-      "Vendor solicitation Option C",
-      "Vendor solicitation Option D",
-      "Vendor bid validation and submission",
-      "Vendor engagement acceptance",
-    ],
-    specFiles: 4,
-    testCases: 19,
-  },
-  {
-    phase: 5,
-    stage: "Report Submission",
-    description: "Vendor submits reports, invoices, and revised delivery dates.",
-    workflows: [
-      "Vendor report and invoice submission",
-      "Report upload and form validation",
-      "Revised delivery date workflows",
-    ],
-    specFiles: 2,
-    testCases: 3,
-  },
-  {
-    phase: 6,
-    stage: "Report Review & Completion",
-    description: "Internal/external review paths through approval and request completion.",
-    workflows: [
-      "Review workflows (internal / external / no review)",
-      "Report review acceptance",
-      "Report review approval",
-      "Report review completion",
-      "Request completion",
-      "Disputed report correction / revision flows",
-    ],
-    specFiles: 6,
-    testCases: 11,
-  },
-  {
-    phase: 7,
-    stage: "Engagement Cancellation",
-    description: "Cancel active vendor engagements when a request is withdrawn.",
-    workflows: [
-      "Engagement cancellation flows",
-      "Cancellation confirmation and status updates",
-    ],
-    specFiles: 1,
-    testCases: 3,
-  },
-];
-
-export const requestLifecycleSummary = {
-  totalPhases: 7,
-  specFiles: 18,
-  testCases: 51,
-  coverageEstimate: "70–75%",
-  framework: "Playwright",
-};
-
-export type AutomationSuite = {
+export type AutomationRunResult = {
   suite: string;
-  specFiles: number;
-  testCases: number;
-  status: "active" | "in-progress" | "planned";
-  framework: "Playwright";
-  workflows: string[];
-  coverageNote?: string;
+  passed: number;
+  failed: number;
+  flaky?: number;
+  skipped: number;
+  passRate: number;
+  date: string;
+  source: string;
+  status: "passing" | "unstable" | "failing" | "planned";
+  note?: string;
 };
 
-/** Counts from YouConnect Playwright suite (Jun 2026) */
-export const automationSuites: AutomationSuite[] = [
+export type AutomationRunSpec = {
+  file: string;
+  passed: number;
+  failed: number;
+  flaky: number;
+  skipped: number;
+  note?: string;
+};
+
+/** YouConnect full regression — 2026-07-14 CI run (stage.realwired.com) */
+export const latestPlaywrightRun = {
+  title: "YouConnect — Playwright Run",
+  subtitle: "Full regression suite · CI mode · headless · Chromium · 1 retry",
+  environment: "stage.realwired.com",
+  startedAt: "2026-07-14 20:49:44 UTC",
+  durationMin: 100.3,
+  totalTests: 113,
+  passed: 105,
+  failed: 3,
+  flaky: 3,
+  skipped: 2,
+  passRatePercent: 94.6,
+  passRateNote: "105/111 executed (excluding skipped)",
+  updateNote:
+    "market-area-crud-smoke:266 is now fixed & verified (8/8 passed on re-run). Root cause: the requests-list search was left in Advanced mode — it now switches to Basic Search first. Counts below are the original run snapshot; only the two RWT-314 canaries remain red.",
+  failureBreakdown: [
+    {
+      count: 2,
+      label: "Expected failures",
+      detail:
+        "Zip County Basic & Advanced Search tests are kept running as canaries for product bug RWT-314; they turn green when it ships.",
+    },
+    {
+      count: 1,
+      label: "Real bug — now fixed",
+      detail:
+        "market-area-crud-smoke:266 (request routes to the Assigned Area's Job Manager). Fixed after this run and verified 8/8.",
+    },
+  ],
+  flakyNote:
+    "3 recovered on retry — login (LO), cancel-engagement, revision-report. Staging-timing flakes the single retry caught.",
+  reportSource:
+    "Generated from results.json · traces, videos, and screenshots in local playwright/test-results/html-report",
+};
+
+export const automationRunResults: AutomationRunResult[] = [
   {
     suite: "Request Lifecycle",
-    specFiles: 18,
-    testCases: 51,
-    status: "active",
-    framework: "Playwright",
-    workflows: [
-      "Request creation",
-      "JM queue & review",
-      "Accept / reject flows",
-      "Vendor solicitation (A/B/C/D)",
-      "Report submission & revised delivery",
-      "Review, approval & completion",
-      "Disputed corrections",
-      "Engagement cancellation",
-    ],
+    passed: 49,
+    failed: 0,
+    flaky: 2,
+    skipped: 0,
+    passRate: 100,
+    date: "Jul 14 2026",
+    source: "CI · stage.realwired.com",
+    status: "unstable",
+    note: "2 flaky on retry — cancel-engagement, revision-report",
   },
   {
     suite: "Authentication",
-    specFiles: 3,
-    testCases: 19,
-    status: "active",
-    framework: "Playwright",
-    workflows: ["Login (3 roles + invalid creds)", "Forgot password", "Forgot username"],
+    passed: 20,
+    failed: 0,
+    flaky: 1,
+    skipped: 2,
+    passRate: 100,
+    date: "Jul 14 2026",
+    source: "CI · stage.realwired.com",
+    status: "unstable",
+    note: "LO login flaky on retry · 2 skipped (invalid password, lockout)",
   },
   {
     suite: "General Settings",
-    specFiles: 1,
-    testCases: 2,
-    status: "active",
-    framework: "Playwright",
-    workflows: ["Default filter by status"],
+    passed: 2,
+    failed: 0,
+    skipped: 0,
+    passRate: 100,
+    date: "Jul 14 2026",
+    source: "CI · stage.realwired.com",
+    status: "passing",
   },
   {
     suite: "Module Smoke Tests",
-    specFiles: 4,
-    testCases: 4,
-    status: "in-progress",
-    framework: "Playwright",
-    workflows: ["Accounts", "Documents", "Zip Code Mgmt", "Field Templates"],
-    coverageNote: "Starting point — initial smoke specs only; broader module coverage still in progress.",
-  },
-  {
-    suite: "ORM Regression",
-    specFiles: 0,
-    testCases: 0,
-    status: "planned",
-    framework: "Playwright",
-    workflows: ["Scope defined", "Backlog prepared", "Rollout validation planned"],
-  },
-  {
-    suite: "CI/CD Integration",
-    specFiles: 0,
-    testCases: 0,
-    status: "in-progress",
-    framework: "Playwright",
-    workflows: ["Ephemeral env execution", "Test data strategy", "Health endpoint validation"],
+    passed: 34,
+    failed: 3,
+    flaky: 0,
+    skipped: 0,
+    passRate: 92,
+    date: "Jul 14 2026",
+    source: "CI · stage.realwired.com",
+    status: "unstable",
+    note: "2 RWT-314 canaries expected · market-area:266 fixed since run",
   },
 ];
 
+export const automationRunSpecDetails: AutomationRunSpec[] = [
+  {
+    file: "modules/market-area/market-area-crud-smoke.spec.js",
+    passed: 6,
+    failed: 1,
+    flaky: 0,
+    skipped: 0,
+    note: "market-area-crud-smoke:266 failed — fixed & verified 8/8 since run",
+  },
+  {
+    file: "modules/zip-code-management/zip-code-management-regression.spec.js",
+    passed: 4,
+    failed: 2,
+    flaky: 0,
+    skipped: 0,
+    note: "RWT-314 canaries — Basic & Advanced Search expected failures",
+  },
+  {
+    file: "auth/login.spec.js",
+    passed: 3,
+    failed: 0,
+    flaky: 1,
+    skipped: 2,
+    note: "LO login recovered on retry",
+  },
+  {
+    file: "request-lifecycle/cancel-engagement/cancel-enagement.spec.js",
+    passed: 2,
+    failed: 0,
+    flaky: 1,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/report-review/report-disputedANDcorrections.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 1,
+    skipped: 0,
+    note: "Revision Report Submission recovered on retry",
+  },
+  {
+    file: "modules/api-accounts/api-accounts-crud-smoke.spec.js",
+    passed: 9,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/request-list/request-review.spec.js",
+    passed: 7,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "auth/forgot-password.spec.js",
+    passed: 7,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "auth/forgot-username.spec.js",
+    passed: 7,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "modules/View-Edit-properties/View_Edit_Properties.spec.js",
+    passed: 6,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "modules/data-msa/data-msa-crud-smoke.spec.js",
+    passed: 6,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/report-review/report-review.spec.js",
+    passed: 5,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/vendor-solicitation/vendor-solicitation-a.spec.js",
+    passed: 5,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/vendor-solicitation/vendor-solicitation-b.spec.js",
+    passed: 5,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/vendor-solicitation/vendor-solicitation-c.spec.js",
+    passed: 5,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/vendor-solicitation/vendor-solicitation-d.spec.js",
+    passed: 4,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/request-creation-wizard/request-creation.spec.js",
+    passed: 3,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/request-actions/accept-request-onestep.spec.js",
+    passed: 3,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "GeneralSettings/DefaultFilterByStatus.spec.js",
+    passed: 2,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/report-submission/report-submission.spec.js",
+    passed: 2,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "modules/documents/documents-list-smoke.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "modules/k-reports/k-reports-smoke.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "modules/st-field-templates/st-field-templates-smoke.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/report-review/report-review-acceptance.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/report-review/report-review-approval.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/report-review/report-review-completion.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/report-review/request-complete.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/report-submission/report-deliverydate-revised.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/request-actions/accept-request-twostep.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "request-lifecycle/request-actions/reject-request-twostep.spec.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "fixtures/auth.setup.admin.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "fixtures/auth.setup.job-manager.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+  {
+    file: "fixtures/auth.setup.loan-officer.js",
+    passed: 1,
+    failed: 0,
+    flaky: 0,
+    skipped: 0,
+  },
+];
+
+export const automationRunSummary = {
+  totalPassed: latestPlaywrightRun.passed,
+  totalFailed: latestPlaywrightRun.failed,
+  totalFlaky: latestPlaywrightRun.flaky,
+  totalSkipped: latestPlaywrightRun.skipped,
+  overallPassRate: latestPlaywrightRun.passRatePercent,
+  totalSpecFiles: automationRunSpecDetails.length,
+  totalAutomatedTests: latestPlaywrightRun.totalTests,
+  /** YouConnect application-wide automation */
+  appWideAutomationPercent: 65,
+  appWideAutomationTargetPercent: 85,
+  /** YouConnect critical workflow automation (Request Lifecycle) */
+  criticalWorkflowAutomationMin: 90,
+  criticalWorkflowAutomationMax: 90,
+  criticalWorkflowAutomationMid: 90,
+  criticalWorkflowAutomationPrevious: 72,
+  criticalWorkflowAutomationTargetPercent: 100,
+  /** @deprecated use appWideAutomationTargetPercent */
+  targetAutomationPercent: 85,
+  ciIntegrated: true,
+  ciStatus: `${latestPlaywrightRun.title} · ${latestPlaywrightRun.startedAt} · ${latestPlaywrightRun.durationMin} min`,
+  note: latestPlaywrightRun.updateNote,
+};
+
 export const automationSummary = {
-  totalSpecFiles: 26,
-  totalAutomatedTests: 76,
-  criticalWorkflowAutomationMin: 70,
-  criticalWorkflowAutomationMax: 75,
-  criticalWorkflowAutomationMid: 72,
+  totalSpecFiles: automationRunSummary.totalSpecFiles,
+  totalAutomatedTests: automationRunSummary.totalAutomatedTests,
+  criticalWorkflowAutomationMin: automationRunSummary.criticalWorkflowAutomationMin,
+  criticalWorkflowAutomationMax: automationRunSummary.criticalWorkflowAutomationMax,
+  criticalWorkflowAutomationMid: automationRunSummary.criticalWorkflowAutomationMid,
   manualCriticalCoverage: 95,
   requestLifecycleSmoke: "Completed",
-  ormAutomationStatus: "Prepared",
+  ormAutomationStatus: "10/26 modules Done on RWT-107",
   frameworksInUse: ["Playwright"],
-  ciIntegrated: false,
-  ciStatus: "Research & planning in progress",
+  ciIntegrated: automationRunSummary.ciIntegrated,
+  ciStatus: automationRunSummary.ciStatus,
   stabilizationFocus: [
     "PHP timing/render flake reduction",
     "Synchronization & execution reliability",
     "Lifecycle workflow consistency",
   ],
 };
-
-export const automatedWorkflows = [
-  "Login (3 roles + invalid credential validation)",
-  "Forgot password / username validation",
-  "Loan Officer request creation workflow",
-  "Job Manager queue and request handling",
-  "Request acceptance / rejection flows",
-  "Vendor solicitation workflows",
-  "Vendor bid validation and submission",
-  "Vendor engagement acceptance",
-  "Vendor report and invoice submission",
-  "Revised delivery date workflows",
-  "Engagement cancellation flows",
-  "Review workflows (internal / external / no review)",
-  "Approval and completion flows",
-  "Disputed report correction / revision flows",
-];
-
-export type Milestone = {
-  date: string;
-  title: string;
-  description: string;
-};
-
-export const milestones: Milestone[] = [
-  {
-    date: "Jan 2026",
-    title: "JDAQA Partnership Begins",
-    description:
-      "QA team onboarded to RealWired portfolio — YouConnect Production, YCVC, Reporting Microservice, and Parachute.",
-  },
-  {
-    date: "Q1 2026",
-    title: "Request Lifecycle Automation",
-    description:
-      "Playwright framework established with ~70–75% automation across critical business workflows and ~95% manual coverage.",
-  },
-  {
-    date: "Q1 2026",
-    title: "YCVC & RM Manual Coverage",
-    description:
-      "162 Vendor Circle and 117 Reporting Microservice test cases completed — 100% passing across 21 feature areas.",
-  },
-  {
-    date: "Apr 2026",
-    title: "Portfolio Inflection Point",
-    description:
-      "Resolved volume exceeds created volume portfolio-wide — backlog reduction trend begins.",
-  },
-  {
-    date: "Q2 2026",
-    title: "ARF Release Support",
-    description:
-      "Major QA bandwidth allocated to AI Review Forms release — rapid regression, API validation, evolving acceptance criteria.",
-  },
-  {
-    date: "Jun 2026",
-    title: "Stabilization & CI/CD Planning",
-    description:
-      "Shift from expansion to regression reliability, ORM automation prep, and CI/CD integration research.",
-  },
-];

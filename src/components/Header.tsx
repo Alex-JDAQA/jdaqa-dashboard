@@ -15,7 +15,6 @@ export function Header() {
         <h1 className="text-3xl font-bold tracking-tight text-text sm:text-4xl">
           {dashboardMeta.title}
         </h1>
-        <p className="mt-2 max-w-xl text-base text-text-muted">{dashboardMeta.subtitle}</p>
       </div>
       <div className="flex flex-col gap-2 text-sm text-text-muted sm:text-right">
         <div className="flex items-center gap-2 sm:justify-end">

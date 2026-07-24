@@ -1,15 +1,16 @@
+import { useState } from "react";
+import { ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Legend,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { executiveSummary, portfolioByMonth } from "../data/metrics";
+import { portfolioByMonth, portfolioByProject, throughputNarrative } from "../data/metrics";
 
 function ChartTooltip({
   active,
@@ -29,7 +30,7 @@ function ChartTooltip({
       <p className="mb-1 text-sm font-semibold text-text">{label}</p>
       {row && (
         <p className="mb-2 text-xs text-text-muted">
-          {row.period === "post-qa" ? "Post-QA" : "Pre-QA"} · {row.resolutionRate}% resolution rate
+          {row.resolutionRate}% resolution rate (resolved ÷ created)
         </p>
       )}
       {payload.map((entry) => (
@@ -44,18 +45,28 @@ function ChartTooltip({
 }
 
 export function PortfolioChart() {
+  const [expandedProject, setExpandedProject] = useState<string | null>(null);
+
+  const toggleProject = (projectId: string) => {
+    setExpandedProject((current) => (current === projectId ? null : projectId));
+  };
+
   return (
     <section className="rounded-2xl border border-border bg-surface-raised p-6">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-text">Portfolio Issue Throughput</h2>
-        <p className="mt-1 text-sm text-text-muted">
-          Combined created vs. resolved · YP + YCVC + RM + ARF
-        </p>
-        <p className="mt-2 text-xs leading-relaxed text-text-muted">
-          {executiveSummary.narrative}
-        </p>
+      <div className="mb-6 flex items-start gap-2">
+        <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+        <div>
+          <h2 className="text-lg font-semibold text-text">Project Throughput</h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Created vs Done · YP + YCVC + RM + ARF · overall project flow
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-text-muted">
+            {throughputNarrative.description}
+          </p>
+        </div>
       </div>
-      <div className="h-80">
+
+      <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={portfolioByMonth} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="#2a3347" strokeDasharray="3 3" vertical={false} />
@@ -65,32 +76,88 @@ export function PortfolioChart() {
               tickLine={false}
               tick={{ fill: "#8b95a8", fontSize: 11 }}
             />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#8b95a8", fontSize: 12 }}
-            />
+            <YAxis axisLine={false} tickLine={false} tick={{ fill: "#8b95a8", fontSize: 12 }} />
             <Tooltip content={<ChartTooltip />} />
             <Legend
               wrapperStyle={{ paddingTop: 16 }}
-              formatter={(value) => (
-                <span className="text-sm text-text-muted">{value}</span>
-              )}
+              formatter={(value) => <span className="text-sm text-text-muted">{value}</span>}
             />
-            <ReferenceLine x="Jan 26" stroke="#3b82f6" strokeDasharray="4 4" label="" />
             <Bar dataKey="created" name="Created" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="resolved" name="Resolved" fill="#22c55e" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="resolved" name="Resolved (Done)" fill="#22c55e" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-4 flex flex-wrap gap-4 text-xs text-text-muted">
-        <span>
-          Pre-QA avg: <strong className="text-text">{executiveSummary.preQa.avgResolvedPerMonth}/mo</strong> resolved
-        </span>
-        <span>
-          Post-QA avg: <strong className="text-success">{executiveSummary.postQa.avgResolvedPerMonth}/mo</strong> resolved
-        </span>
-        <span className="text-accent">{executiveSummary.inflectionPoint}</span>
+
+      <div className="mt-4 space-y-2 text-xs text-text-muted">
+        <p className="text-accent">{throughputNarrative.highlight}</p>
+        <p className="rounded-lg border border-border-subtle bg-surface-overlay px-3 py-2 leading-relaxed">
+          {throughputNarrative.contextNote}
+        </p>
+      </div>
+
+      <div className="mt-6 border-t border-border-subtle pt-5">
+        <p className="mb-3 text-xs font-medium tracking-wide text-text-muted uppercase">
+          Per-project breakdown
+        </p>
+        <div className="space-y-2">
+          {portfolioByProject.map((project) => {
+            const isExpanded = expandedProject === project.projectId;
+            const ytdCreated = project.months.reduce((sum, m) => sum + m.created, 0);
+            const ytdResolved = project.months.reduce((sum, m) => sum + m.resolved, 0);
+
+            return (
+              <div
+                key={project.projectId}
+                className="rounded-xl border border-border-subtle bg-surface-overlay"
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleProject(project.projectId)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                  aria-expanded={isExpanded}
+                >
+                  <div className="flex items-center gap-2">
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4 text-text-muted" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-text-muted" />
+                    )}
+                    <span className="rounded bg-accent/10 px-2 py-0.5 font-mono text-xs font-medium text-accent">
+                      {project.shortName}
+                    </span>
+                    <span className="text-sm font-medium text-text">{project.projectName}</span>
+                  </div>
+                  <div className="flex gap-4 text-xs text-text-muted">
+                    <span>
+                      <span className="font-semibold text-warning">{ytdCreated}</span> created
+                    </span>
+                    <span>
+                      <span className="font-semibold text-success">{ytdResolved}</span> resolved
+                    </span>
+                  </div>
+                </button>
+
+                {isExpanded && (
+                  <div className="border-t border-border-subtle px-4 py-3">
+                    <div className="grid grid-cols-7 gap-2 text-center text-xs">
+                      {project.months.map((month) => (
+                        <div key={month.month} className="rounded-lg bg-surface p-2">
+                          <p className="text-text-muted">{month.month}</p>
+                          <p className="mt-1 font-semibold text-warning">{month.created}</p>
+                          <p className="font-semibold text-success">{month.resolved}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex justify-center gap-6 text-[10px] text-text-muted">
+                      <span>▲ created</span>
+                      <span>▼ resolved</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

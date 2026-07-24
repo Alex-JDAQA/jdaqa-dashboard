@@ -1,28 +1,56 @@
 import { useEffect, useState } from "react";
+import type { ViewMode, YtdSubView } from "../data/metrics";
 
-const sections = [
+const sprintSections = [{ id: "overview", label: "KPIs" }] as const;
+
+const ytdOverviewSections = [
   { id: "overview", label: "KPIs" },
   { id: "portfolio", label: "Throughput" },
   { id: "bugs", label: "Bugs" },
-  { id: "impact", label: "Impact" },
-  { id: "projects", label: "Projects" },
-  { id: "manual", label: "Manual" },
-  { id: "automation-coverage", label: "Automation Coverage" },
-  { id: "timeline", label: "Timeline" },
+  { id: "coverage", label: "Coverage" },
 ] as const;
 
-type SectionId = (typeof sections)[number]["id"];
+const ytdAutomationSections = [
+  { id: "auto-overview", label: "Overview" },
+  { id: "orm", label: "ORM" },
+  { id: "runs", label: "Runs" },
+  { id: "by-project", label: "By Project" },
+] as const;
+
+type SectionId =
+  | (typeof sprintSections)[number]["id"]
+  | (typeof ytdOverviewSections)[number]["id"]
+  | (typeof ytdAutomationSections)[number]["id"];
 
 const SCROLL_OFFSET = 96;
 
-export function SectionNav() {
+function getSections(viewMode: ViewMode, ytdSubView: YtdSubView) {
+  if (viewMode === "sprint") return sprintSections;
+  return ytdSubView === "overview" ? ytdOverviewSections : ytdAutomationSections;
+}
+
+export function SectionNav({
+  viewMode,
+  ytdSubView,
+}: {
+  viewMode: ViewMode;
+  ytdSubView: YtdSubView;
+}) {
+  const sections = getSections(viewMode, ytdSubView);
   const [activeId, setActiveId] = useState<SectionId>(sections[0].id);
 
   useEffect(() => {
-    const updateActiveSection = () => {
-      let current: SectionId = sections[0].id;
+    const nextSections = getSections(viewMode, ytdSubView);
+    setActiveId(nextSections[0].id);
+  }, [viewMode, ytdSubView]);
 
-      for (const section of sections) {
+  useEffect(() => {
+    const currentSections = getSections(viewMode, ytdSubView);
+
+    const updateActiveSection = () => {
+      let current: SectionId = currentSections[0].id;
+
+      for (const section of currentSections) {
         const element = document.getElementById(section.id);
         if (element && element.getBoundingClientRect().top <= SCROLL_OFFSET) {
           current = section.id;
@@ -35,7 +63,7 @@ export function SectionNav() {
     updateActiveSection();
     window.addEventListener("scroll", updateActiveSection, { passive: true });
     return () => window.removeEventListener("scroll", updateActiveSection);
-  }, []);
+  }, [viewMode, ytdSubView]);
 
   const handleClick = (id: SectionId) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -58,7 +86,7 @@ export function SectionNav() {
               aria-current={isActive ? "true" : undefined}
               className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-accent-soft text-accent"
+                  ? "bg-accent text-white"
                   : "text-text-muted hover:bg-surface-overlay hover:text-text"
               }`}
             >

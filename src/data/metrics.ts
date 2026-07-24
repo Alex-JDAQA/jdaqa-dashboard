@@ -12,7 +12,6 @@
 import {
   ormAutomationEpic,
   sprintCurrentDeliveredTickets,
-  sprintDeliveredTickets,
   sprintInQaTickets,
   sprintOrmAutomationInSprint,
   type SprintTicket,

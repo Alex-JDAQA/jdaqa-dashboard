@@ -58,7 +58,7 @@ export function PortfolioChart() {
         <div>
           <h2 className="text-lg font-semibold text-text">Project Throughput</h2>
           <p className="mt-1 text-sm text-text-muted">
-            Created vs Done · YP + YCVC + RM + ARF · overall project flow
+            Created vs Done · YP + YCVC + RM + ARF + RWT · overall project flow
           </p>
           <p className="mt-2 text-xs leading-relaxed text-text-muted">
             {throughputNarrative.description}
@@ -102,8 +102,7 @@ export function PortfolioChart() {
         <div className="space-y-2">
           {portfolioByProject.map((project) => {
             const isExpanded = expandedProject === project.projectId;
-            const ytdCreated = project.months.reduce((sum, m) => sum + m.created, 0);
-            const ytdResolved = project.months.reduce((sum, m) => sum + m.resolved, 0);
+            const { ytdCreated, ytdResolved } = project;
 
             return (
               <div
@@ -139,19 +138,25 @@ export function PortfolioChart() {
 
                 {isExpanded && (
                   <div className="border-t border-border-subtle px-4 py-3">
-                    <div className="grid grid-cols-7 gap-2 text-center text-xs">
-                      {project.months.map((month) => (
-                        <div key={month.month} className="rounded-lg bg-surface p-2">
-                          <p className="text-text-muted">{month.month}</p>
-                          <p className="mt-1 font-semibold text-warning">{month.created}</p>
-                          <p className="font-semibold text-success">{month.resolved}</p>
+                    {project.months ? (
+                      <>
+                        <div className="grid grid-cols-4 gap-2 text-center text-xs sm:grid-cols-8">
+                          {project.months.map((month) => (
+                            <div key={month.month} className="rounded-lg bg-surface p-2">
+                              <p className="text-text-muted">{month.month}</p>
+                              <p className="mt-1 font-semibold text-warning">{month.created}</p>
+                              <p className="font-semibold text-success">{month.resolved}</p>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                    <div className="mt-2 flex justify-center gap-6 text-[10px] text-text-muted">
-                      <span>▲ created</span>
-                      <span>▼ resolved</span>
-                    </div>
+                        <div className="mt-2 flex justify-center gap-6 text-[10px] text-text-muted">
+                          <span>▲ created</span>
+                          <span>▼ resolved</span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs leading-relaxed text-text-muted">{project.note}</p>
+                    )}
                   </div>
                 )}
               </div>

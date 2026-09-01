@@ -67,7 +67,7 @@ export function BugMetrics({ metrics }: { metrics: BugPeriodMetrics }) {
                 <ChevronRight className="h-4 w-4 text-text-muted" />
               )}
               <span className="text-xs font-medium tracking-wide text-text-muted uppercase">
-                Bug Tickets In This Sprint
+                Bug Tickets In This Period
               </span>
               <span className="rounded bg-surface px-2 py-0.5 font-mono text-[11px] text-text-muted">
                 {tickets.length}

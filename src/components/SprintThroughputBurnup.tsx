@@ -13,20 +13,26 @@ import {
 
 function paceLabel(deliveredPct: number, timePct: number) {
   const delta = deliveredPct - timePct;
-  if (delta > 3) return { text: "Ahead of time", tone: "text-success" };
-  if (delta < -3) return { text: "Behind time", tone: "text-warning" };
+  if (delta > 3) return { text: "Ahead of prior window", tone: "text-success" };
+  if (delta < -3) return { text: "Behind prior window", tone: "text-warning" };
   return { text: "On pace", tone: "text-text-muted" };
 }
 
 export function SprintThroughputBurnup() {
   const [ticketsOpen, setTicketsOpen] = useState(false);
   const { currentSprint, previousSprint } = sprintMeta;
-  const { deliveredItems, committedItems, daysElapsed, daysTotal, contextNote } =
-    sprintThroughput;
+  const {
+    deliveredItems,
+    benchmarkItems,
+    daysElapsed,
+    daysTotal,
+    boardInFlightItems,
+    contextNote,
+  } = sprintThroughput;
 
-  const deliveredPct = (deliveredItems / committedItems) * 100;
+  const deliveredPct = (deliveredItems / benchmarkItems) * 100;
   const timePct = (daysElapsed / daysTotal) * 100;
-  const remainingItems = committedItems - deliveredItems;
+  const remainingItems = benchmarkItems - deliveredItems;
   const pace = paceLabel(deliveredPct, timePct);
 
   return (
@@ -34,10 +40,10 @@ export function SprintThroughputBurnup() {
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-text">
-            Sprint Throughput · {currentSprint.name}
+            Delivery Flow · {currentSprint.name}
           </h2>
           <p className="mt-1 text-sm text-text-muted">
-            {currentSprint.range} · Done-column burnup vs sprint commitment
+            {currentSprint.range} · RWT Consolidated close-outs vs the prior window
           </p>
         </div>
         <TrendingUp className="h-5 w-5 shrink-0 text-success" />
@@ -45,11 +51,9 @@ export function SprintThroughputBurnup() {
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-4xl font-bold tracking-tight text-text">
-            {Math.round(deliveredPct)}%
-          </p>
+          <p className="text-4xl font-bold tracking-tight text-text">{deliveredItems}</p>
           <p className="mt-1 text-sm text-text-muted">
-            {deliveredItems} of {committedItems} committed items in Done
+            items moved to Done · {boardInFlightItems} still in flight on the board
           </p>
         </div>
         <div className="text-right">
@@ -63,8 +67,8 @@ export function SprintThroughputBurnup() {
 
       <div className="mt-5">
         <div className="mb-2 flex justify-between text-xs text-text-muted">
-          <span>Burnup — items moved to Done</span>
-          <span>{remainingItems} remaining</span>
+          <span>Pace — {Math.round(deliveredPct)}% of the prior window's close-outs</span>
+          <span>{remainingItems} to match it</span>
         </div>
         <div className="relative h-4 overflow-hidden rounded-full bg-surface">
           <div
@@ -87,7 +91,7 @@ export function SprintThroughputBurnup() {
             <span className="inline-block h-2 w-0.5 bg-amber-300" />
             Time elapsed (day {daysElapsed})
           </span>
-          <span>{committedItems} committed</span>
+          <span>{benchmarkItems} prior-window benchmark</span>
         </div>
       </div>
 
@@ -108,7 +112,7 @@ export function SprintThroughputBurnup() {
                 <ChevronRight className="h-4 w-4 text-text-muted" />
               )}
               <span className="text-xs font-medium tracking-wide text-text-muted uppercase">
-                Moved to Done this sprint
+                Moved to Done this window
               </span>
               <span className="rounded bg-surface px-2 py-0.5 font-mono text-[11px] text-text-muted">
                 {sprintCurrentDeliveredTickets.length}

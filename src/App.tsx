@@ -53,8 +53,9 @@ export default function App() {
           {isSprint && (
             <div id="overview" className="scroll-mt-24 space-y-6">
               <p className="text-sm text-text-muted">
-                {sprintMeta.currentSprint.name} active · prior {sprintMeta.previousSprint.name}{" "}
-                closed
+                RWT Consolidated · {sprintMeta.currentSprint.name} · day{" "}
+                {sprintMeta.currentSprint.daysElapsed} of{" "}
+                {sprintMeta.currentSprint.daysTotal}
               </p>
               <KpiGrid cards={sprintKpiCards} />
               <BugMetrics metrics={sprintBugMetrics} />

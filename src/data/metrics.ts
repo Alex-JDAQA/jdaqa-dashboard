@@ -3,14 +3,19 @@
  * Point-in-time 6-month pre/post report frozen at git tag: point-in-time-6mo-contract
  *
  * Sources:
- * - Portfolio throughput Jan–Jul 2026: live Jira (YP, YCVC, RM, ARF) Jul 24 2026
- * - Sprint 28/29 + QA pipeline: Rovo / Confluence "Sprint 28 Review & Sprint 29 Plan" + Jira (Jul 13 2026)
+ * - Portfolio throughput Jan–Aug 2026: live Jira (YP, YCVC, RM, ARF, RWT) Sep 1 2026.
+ *   Excludes Xray artifacts by their real issue-type names — "Test" (not "Xray Test"),
+ *   Test Execution / Test Plan / Test Set / Precondition. The earlier filter missed
+ *   1,281 YP "Test" issues and inflated the resolution rate.
+ * - Sprint: Sprint 33 (board 271, Aug 31 – Sep 7), the single active sprint; it carries
+ *   work from both boards (Projects & Features and YP+VC+Onboarding)
  * - Team: Alex Norwood, Chester Cabia, Marvis Medrano, Rishi Kumar (ORM epic RWT-107)
  * - Coverage / automation inventory: Xray + YouConnect Playwright suite
  */
 
 import {
   ormAutomationEpic,
+  ormCompletedModules,
   sprintCurrentDeliveredTickets,
   sprintInQaTickets,
   sprintOrmAutomationInSprint,
@@ -33,8 +38,8 @@ export type YtdSubView = "overview" | "automation";
 export const dashboardMeta = {
   title: "JDAQA Dashboard",
   partnershipStart: "January 1, 2026",
-  reportingPeriod: "Sprint 29 · Jan – Jul 2026",
-  lastUpdated: "July 24, 2026",
+  reportingPeriod: "Sprint 33 · Aug 31 – Sep 7 · Jan – Aug 2026",
+  lastUpdated: "September 1, 2026",
   team: "JDAQA",
   client: "RealWired",
   archiveTag: "point-in-time-6mo-contract",
@@ -100,19 +105,24 @@ export type PortfolioMonth = {
 };
 
 /**
- * Combined portfolio monthly totals (YP + YCVC + RM + ARF).
- * Live Jira pull Jul 24, 2026 (excludes Xray Test / Test Execution /
- * Test Plan / Test Set / Precondition). Created = created in month;
- * resolved = status Done with resolved date in month.
+ * Combined portfolio monthly totals across all five projects
+ * (YP + YCVC + RM + ARF + RWT). Live Jira pull Sep 1, 2026, excluding Xray
+ * artifacts ("Test", Test Execution, Test Plan, Test Set, Precondition).
+ * Created = created in month; resolved = moved to Done in month.
+ *
+ * RWT is included from here on: the four original projects went dormant through
+ * June as delivery consolidated into RWT, so a YP-only series no longer tracks
+ * where the work is. Jul/Aug are almost entirely RWT.
  */
 export const portfolioByMonth: PortfolioMonth[] = [
-  { month: "Jan 26", created: 304, resolved: 80, resolutionRate: 26 },
-  { month: "Feb 26", created: 273, resolved: 105, resolutionRate: 38 },
-  { month: "Mar 26", created: 704, resolved: 398, resolutionRate: 57 },
-  { month: "Apr 26", created: 187, resolved: 305, resolutionRate: 163 },
-  { month: "May 26", created: 134, resolved: 184, resolutionRate: 137 },
-  { month: "Jun 26", created: 101, resolved: 142, resolutionRate: 141 },
-  { month: "Jul 26", created: 72, resolved: 75, resolutionRate: 104 },
+  { month: "Jan 26", created: 155, resolved: 78, resolutionRate: 50 },
+  { month: "Feb 26", created: 153, resolved: 102, resolutionRate: 67 },
+  { month: "Mar 26", created: 216, resolved: 172, resolutionRate: 80 },
+  { month: "Apr 26", created: 120, resolved: 231, resolutionRate: 193 },
+  { month: "May 26", created: 113, resolved: 149, resolutionRate: 132 },
+  { month: "Jun 26", created: 233, resolved: 179, resolutionRate: 77 },
+  { month: "Jul 26", created: 179, resolved: 86, resolutionRate: 48 },
+  { month: "Aug 26", created: 256, resolved: 119, resolutionRate: 46 },
 ];
 
 export type ThroughputMonth = {
@@ -125,66 +135,63 @@ export type PortfolioByProject = {
   projectId: string;
   projectName: string;
   shortName: string;
-  months: ThroughputMonth[];
+  ytdCreated: number;
+  ytdResolved: number;
+  /** Month-by-month split, where a verified per-month pull exists */
+  months?: ThroughputMonth[];
+  note?: string;
 };
 
-/** Per-project YTD throughput drill-down — sums to portfolioByMonth totals; replace with Jira pull */
+/** Per-project YTD throughput drill-down — live Jira Sep 1, 2026, Xray artifacts excluded */
 export const portfolioByProject: PortfolioByProject[] = [
   {
-    projectId: "yp",
-    projectName: "YouConnect Production",
-    shortName: "YP",
+    projectId: "rwt",
+    projectName: "RWT Consolidated",
+    shortName: "RWT",
+    ytdCreated: 656,
+    ytdResolved: 292,
     months: [
-      { month: "Jan", created: 180, resolved: 45 },
-      { month: "Feb", created: 150, resolved: 55 },
-      { month: "Mar", created: 380, resolved: 220 },
-      { month: "Apr", created: 100, resolved: 150 },
-      { month: "May", created: 75, resolved: 95 },
-      { month: "Jun", created: 50, resolved: 65 },
-      { month: "Jul", created: 71, resolved: 74 },
-    ],
-  },
-  {
-    projectId: "ycvc",
-    projectName: "YC Vendor Circle",
-    shortName: "YCVC",
-    months: [
-      { month: "Jan", created: 60, resolved: 15 },
-      { month: "Feb", created: 50, resolved: 20 },
-      { month: "Mar", created: 120, resolved: 65 },
-      { month: "Apr", created: 35, resolved: 55 },
-      { month: "May", created: 25, resolved: 35 },
-      { month: "Jun", created: 18, resolved: 22 },
-      { month: "Jul", created: 0, resolved: 0 },
+      { month: "Jan", created: 1, resolved: 0 },
+      { month: "Feb", created: 1, resolved: 0 },
+      { month: "Mar", created: 8, resolved: 0 },
+      { month: "Apr", created: 7, resolved: 0 },
+      { month: "May", created: 26, resolved: 11 },
+      { month: "Jun", created: 179, resolved: 80 },
+      { month: "Jul", created: 178, resolved: 82 },
+      { month: "Aug", created: 256, resolved: 119 },
     ],
   },
   {
     projectId: "rm",
     projectName: "Reporting Microservice",
     shortName: "RM",
-    months: [
-      { month: "Jan", created: 80, resolved: 18 },
-      { month: "Feb", created: 65, resolved: 25 },
-      { month: "Mar", created: 180, resolved: 100 },
-      { month: "Apr", created: 55, resolved: 80 },
-      { month: "May", created: 30, resolved: 40 },
-      { month: "Jun", created: 20, resolved: 28 },
-      { month: "Jul", created: 0, resolved: 0 },
-    ],
+    ytdCreated: 299,
+    ytdResolved: 315,
+    note: "Dormant since June — intake moved to RWT. Resolved exceeds created because the backlog was drained.",
   },
   {
     projectId: "arf",
     projectName: "Parachute / AI Review Forms",
     shortName: "ARF",
-    months: [
-      { month: "Jan", created: 18, resolved: 4 },
-      { month: "Feb", created: 22, resolved: 8 },
-      { month: "Mar", created: 50, resolved: 30 },
-      { month: "Apr", created: 21, resolved: 23 },
-      { month: "May", created: 13, resolved: 14 },
-      { month: "Jun", created: 6, resolved: 8 },
-      { month: "Jul", created: 1, resolved: 1 },
-    ],
+    ytdCreated: 194,
+    ytdResolved: 135,
+    note: "Dormant since July — Parachute work now tracked in RWT.",
+  },
+  {
+    projectId: "ycvc",
+    projectName: "YC Vendor Circle",
+    shortName: "YCVC",
+    ytdCreated: 158,
+    ytdResolved: 262,
+    note: "Dormant since June — Vendor Circle work now tracked in RWT.",
+  },
+  {
+    projectId: "yp",
+    projectName: "YouConnect Production",
+    shortName: "YP",
+    ytdCreated: 118,
+    ytdResolved: 112,
+    note: "Dormant since June. Excludes 1,281 Xray 'Test' artifacts that the previous filter counted as throughput.",
   },
 ];
 
@@ -199,37 +206,44 @@ export const issueThroughputSummary = {
   totalCreatedYtd: portfolioCreatedYtd,
   resolutionRatePercent:
     Math.round((portfolioResolvedYtd / portfolioCreatedYtd) * 1000) / 10,
-  period: "Jan 2026 – Jul 2026 (MTD)",
+  period: "Jan 2026 – Aug 2026",
 };
 
 /**
  * QA-lane resolved throughput — Done issues ever assigned to JDAQA (assignee WAS).
  * Counts tickets that passed through QA even if reassigned back to dev before close.
- * Verified live Jira pull Jul 15, 2026.
+ * Verified live Jira pull Aug 21, 2026.
  */
 export const qaResolvedJql = `project in (YP, YCVC, RM, ARF) AND status = Done AND resolved >= "2026-01-01" AND (assignee WAS "712020:5085ca47-c432-421e-9b43-03ed76c1f0f1" OR assignee WAS "712020:b10ccd52-f0b3-4a52-b6da-285cb8352b30" OR assignee WAS "712020:3928f4f1-270a-41a8-9bd7-d2da1ebaf5c7" OR assignee WAS "712020:74309a28-b6a3-48f1-87cc-9d4c7d7f133b" OR assignee WAS "712020:c3aefbf1-a2de-4f47-888e-aa420021a8fd") AND issuetype NOT IN ("Xray Test", "Test Execution", "Test Plan", "Test Set", "Precondition")`;
 
-const qaResolvedYtd = 162;
+/**
+ * Still on the pre-fix basis: four projects only, and the "Xray Test" exclusion
+ * that never matched the real "Test" issue type. Re-running it across all five
+ * projects with the corrected exclusion gives 157. Awaiting sign-off before
+ * restating this KPI.
+ */
+const qaResolvedYtd = 174;
 const qaResolvedMonths = portfolioByMonth.length;
 
 export const qaIssueThroughputSummary = {
   avgResolvedPerMonth:
     Math.round((qaResolvedYtd / qaResolvedMonths) * 10) / 10,
   totalResolvedYtd: qaResolvedYtd,
-  period: "Jan 2026 – Jul 2026 (MTD)",
+  period: "Jan 2026 – Aug 2026",
 };
 
 export const manualCoverageSummary = {
-  testRepositoryTotal: 955,
+  testRepositoryTotal: 979,
   sprintTestingCases: 100,
-  totalFormalTestCases: 955 - 100,
+  totalFormalTestCases: 979 - 100,
   youConnectCoreWorkflows: 147,
   preconditions: 26,
   reportingMicroservice: 455,
   vendorManagement: 69,
   vendorCircle: 92,
   aiReviewForms: 62,
-  functionalTestingTotal: 851,
+  parachuteStandalone: 24,
+  functionalTestingTotal: 875,
 };
 
 /** Year-to-date KPIs — primary leadership view for Ed */
@@ -246,18 +260,17 @@ export const ytdKpiCards: KpiCard[] = [
     label: "Project Resolution Rate",
     value: issueThroughputSummary.resolutionRatePercent,
     unit: "%",
-    change: 1.3,
-    changeLabel: "from 71.3% last month",
-    trend: "up",
+    changeLabel: `${issueThroughputSummary.totalResolvedYtd.toLocaleString()} Done ÷ ${issueThroughputSummary.totalCreatedYtd.toLocaleString()} created · ${issueThroughputSummary.period}`,
     accent: "green",
-    subtext: "Overall project throughput · created vs Done YTD",
+    subtext:
+      "Restated: now spans all five projects and excludes Xray 'Test' artifacts. Not comparable to the 73.9% shown before the filter fix.",
   },
   {
     id: "automation-coverage",
     label: "Critical Workflow Automation",
-    value: 90,
+    value: 95,
     unit: "%",
-    change: 18,
+    change: 23,
     changeLabel: "from 72%",
     trend: "up",
     accent: "violet",
@@ -281,113 +294,101 @@ export const monthlyKpiCards = ytdKpiCards;
 export const kpiCards = ytdKpiCards;
 
 /**
- * Sprint metrics — aligned to bi-weekly Ed check-ins.
- * Sources: Confluence Sprint 28 Review & Sprint 29 Plan (generated 2026-07-13) + live Jira.
+ * Delivery metrics — Sprint 33, the single active sprint (board 271). Named sprints
+ * are back as the reporting unit now that Sprint 33 carries work from both boards
+ * (Projects & Features and YP+VC+Onboarding).
+ *
+ * Sprint 33 runs one week, so the pace benchmark is the prior one-week window
+ * (Aug 24–30 = 34 close-outs) rather than a two-week window, which would compare
+ * unequal durations.
  */
 export const sprintMeta = {
   previousSprint: {
-    name: "Sprint 28",
-    range: "Jun 29 – Jul 13, 2026",
+    name: "Aug 24 – 30 window",
+    range: "Aug 24 – Aug 30, 2026",
     status: "closed" as const,
-    deliveredItems: 36,
-    deliveredStoryPoints: 32,
+    deliveredItems: 34,
+    deliveredStoryPoints: 0,
   },
   currentSprint: {
-    name: "Sprint 29",
-    range: "Jul 13 – Jul 31, 2026",
+    name: "Sprint 33",
+    range: "Aug 31 – Sep 7, 2026",
     status: "active" as const,
-    committedItems: 164,
-    committedStoryPoints: 179,
-    netNewDevSp: 110,
+    /** Sprint 33 items outside Done */
+    boardOpenItems: 90,
+    /** Sprint 33 items past the To Do backlog and not yet Done — work in flight */
+    boardInFlightItems: 55,
     deliveredItems: sprintCurrentDeliveredTickets.length,
-    daysElapsed: 12,
-    daysTotal: 19,
+    daysElapsed: 2,
+    daysTotal: 7,
   },
   sourceUrl:
-    "https://realwired.atlassian.net/wiki/spaces/DEV/pages/296517636/Sprint+28+Review+Sprint+29+Plan",
+    "https://realwired.atlassian.net/jira/software/c/projects/RWT/boards",
 };
 
+/** Sprint 33 column load — live Jira Sep 1, 2026 (`sprint in openSprints()` by status, 108 items) */
 export const sprintPipeline = [
-  { stage: "To Do", items: 35, storyPoints: 80, meaning: "Net-new, not started", highlight: false },
-  { stage: "In Progress", items: 15, storyPoints: 30, meaning: "Net-new, underway", highlight: false },
-  { stage: "Review", items: 14, storyPoints: 15, meaning: "Code complete, in review", highlight: false },
+  { stage: "To Do", items: 35, meaning: "In the sprint, not started", highlight: false },
+  { stage: "In Progress", items: 22, meaning: "Underway in dev", highlight: false },
+  { stage: "Review", items: 10, meaning: "Code complete, in review", highlight: false },
   {
     stage: "QA Ready / QA In Progress",
-    items: 14,
-    storyPoints: 29,
-    meaning: "Handed to QA — primary sprint load signal",
+    items: 15,
+    meaning: "Handed to QA — primary QA load signal",
     highlight: true,
   },
-  { stage: "Ready for Stage", items: 11, storyPoints: 7, meaning: "Awaiting stage deploy", highlight: false },
-  { stage: "Ready for PROD", items: 24, storyPoints: 25, meaning: "Awaiting prod deploy", highlight: false },
-  { stage: "Blocked", items: 7, storyPoints: 7, meaning: "Needs unblocking", highlight: false },
+  { stage: "Ready for Stage", items: 1, meaning: "Awaiting stage deploy", highlight: false },
+  { stage: "Ready for PROD", items: 2, meaning: "Awaiting prod deploy", highlight: false },
+  { stage: "Blocked", items: 1, meaning: "Needs unblocking", highlight: false },
+  { stage: "Hold", items: 4, meaning: "Parked by product / client", highlight: false },
+  { stage: "Done", items: 18, meaning: "Closed in or before this sprint", highlight: false },
 ];
 
-const sprintThroughputPercent = Math.round(
-  (sprintMeta.currentSprint.deliveredItems / sprintMeta.currentSprint.committedItems) * 100,
+const sprintPacePercent = Math.round(
+  (sprintMeta.currentSprint.deliveredItems / sprintMeta.previousSprint.deliveredItems) * 100,
 );
 
 export const sprintThroughput = {
   deliveredItems: sprintMeta.currentSprint.deliveredItems,
-  committedItems: sprintMeta.currentSprint.committedItems,
-  percentOfCommitted: sprintThroughputPercent,
+  /** Prior two-week window's close-outs — the pace benchmark for a Kanban lane */
+  benchmarkItems: sprintMeta.previousSprint.deliveredItems,
+  percentOfBenchmark: sprintPacePercent,
   daysElapsed: sprintMeta.currentSprint.daysElapsed,
   daysTotal: sprintMeta.currentSprint.daysTotal,
-  priorSprintDelivered: sprintMeta.previousSprint.deliveredItems,
+  boardInFlightItems: sprintMeta.currentSprint.boardInFlightItems,
   sourceNote:
-    'Jira: sprint = "RealWired Sprint 29" (164 currently on sprint · 38 Done · verified Jul 24, 2026).',
+    'Jira (verified Sep 1, 2026): `project = RWT AND status CHANGED TO Done AFTER "2026-08-31 14:50"` = 7 items, 6 of them Sprint 33 tickets. Benchmark: the same query over Aug 24–30 = 34. Sprint 33 load: 108 items, 55 in flight, 15 in QA.',
   contextNote:
-    "Committed = tickets currently assigned to Sprint 29. Remaining = on-sprint items not yet Done.",
+    "Sprint 33 is a one-week sprint (Aug 31 – Sep 7), so pace is measured against the prior one-week window's 34 close-outs rather than the Aug 17–31 two-week figure of 68 — comparing a week against a fortnight would understate pace by half.",
 };
 
 export const sprintOrmProgress = {
   epic: ormAutomationEpic.key,
   epicTitle: ormAutomationEpic.title,
   epicUrl: ormAutomationEpic.url,
-  /** Live Jira Jul 24, 2026 — `"Epic Link" = RWT-107` (26 child tasks).
-   * Manual override: Documents counted Done (review/push remaining). */
-  totalModules: 26,
-  done: 10,
-  inQa: 2,
-  todo: 14,
-  sprint28Delivered: [
-    "St_Appraisal",
-    "API Accounts",
-    "data_MSA",
-    "st_MarketArea",
-    "request-lifecycle staging adjustments",
-  ],
-  /** Sprint 29 epic tasks by current status (live Jul 24 + Documents manual Done) */
-  sprint29Done: ["Report Summaries", "St_FieldTemplates", "Documents"],
-  sprint29InQa: ["Bulk Bids (QA Ready)", "Portfolio/Project (QA Ready)"],
-  sprint29Todo: ["St_Vendor", "st_LogicalRouting", "st_Solicitation"],
-  /** Epic To Do modules not in Sprint 29 (queued / Sprint 30+) */
-  backlogTodo: [
+  /** Live Jira Sep 1, 2026 — `parent = RWT-107` (28 child tasks). */
+  totalModules: 28,
+  done: 27,
+  inQa: 1,
+  inProgress: 0,
+  todo: 0,
+  /** Modules closed in the prior window (Aug 24 – 30) */
+  priorWindowDelivered: [
     "KReports",
-    "Eris Report",
-    "Comments",
-    "Bank Holiday Configuration",
-    "Emails",
-    "st_VendorLetters",
     "Geocode status",
-    "User Management",
-    "Password Management",
     "Transaction Report",
     "Notes",
   ],
-  /** @deprecated use sprint29Done / sprint29InQa / sprint29Todo */
-  sprint29PlannedModules: [
-    "Report Summaries",
-    "St_FieldTemplates",
-    "Documents",
-    "Bulk Bids",
-    "Portfolio/Project",
-    "St_Vendor",
-    "st_LogicalRouting",
-    "st_Solicitation",
-  ],
+  /** Sprint 33 epic progress */
+  currentWindowDone: ["User Management"],
+  currentWindowInQa: ["st_VendorLetters (QA In Progress)"],
+  currentWindowInProgress: [],
+  /** Epic To Do modules still queued */
+  backlogTodo: [],
+  /** All RWT-107 children in Done */
+  completedModules: ormCompletedModules,
   contextNote:
-    "Epic RWT-107: 10 Done · 2 in QA · 14 To Do (Documents counted Done pending review/push). Sprint 29: 3 Done, 2 in QA, 3 To Do · 11 backlog To Do.",
+    "Epic RWT-107 is effectively complete: 27 of 28 modules Done, with only st_VendorLetters left in QA. The To Do backlog is empty — User Management and Transaction Report both closed since the last update.",
 };
 
 export const sprintKpiCards: KpiCard[] = [
@@ -395,17 +396,19 @@ export const sprintKpiCards: KpiCard[] = [
     id: "qa-queue",
     label: "In QA Right Now",
     value: sprintInQaTickets.length,
-    changeLabel: "29 Story Points · QA Ready / QA In Progress · Sprint 29",
+    changeLabel: `${sprintInQaTickets.length} tickets · QA Ready / QA In Progress · Sprint 33`,
+    subtext:
+      "Up from 5 two weeks ago — 13 of the 15 are Parachute Standalone stories (login, nav, Workbook Editor) that landed in QA together",
     accent: "amber",
     tickets: sprintInQaTickets,
     ticketsLabel: "Tickets in QA",
   },
   {
     id: "sprint-delivered",
-    label: `Tickets Moved to Done in ${sprintMeta.currentSprint.name}`,
+    label: `Tickets Moved to Done · ${sprintMeta.currentSprint.name}`,
     value: sprintCurrentDeliveredTickets.length,
     unit: "tickets",
-    changeLabel: `${sprintMeta.currentSprint.deliveredItems} of ${sprintMeta.currentSprint.committedItems} committed · RealWired board Done column`,
+    changeLabel: `Day ${sprintMeta.currentSprint.daysElapsed} of ${sprintMeta.currentSprint.daysTotal} · prior window closed ${sprintMeta.previousSprint.deliveredItems}`,
     accent: "green",
     trend: "up",
     tickets: sprintCurrentDeliveredTickets,
@@ -413,22 +416,23 @@ export const sprintKpiCards: KpiCard[] = [
   },
   {
     id: "bugs-sprint",
-    label: "Bugs Detected This Sprint",
-    value: 15,
-    changeLabel: "Sprint 29 · created in sprint dates",
-    subtext: "Jira Bug tickets with Created date in Sprint 29 window",
+    label: "Bugs Detected in August",
+    value: 35,
+    changeLabel: "Created Aug 1 – Aug 31 · 13 Done",
+    subtext:
+      "Product bugs only — excludes 8 infrastructure/DevOps tickets (Splunk log forwarder, ORM dev env, site-slowness and version-control items)",
     accent: "blue",
   },
   {
     id: "orm-automation",
-    label: `Upcoming Automation Tasks · ${sprintMeta.currentSprint.name}`,
+    label: `Automation Tasks · ${sprintMeta.currentSprint.name}`,
     value: sprintOrmAutomationInSprint.length,
     unit: "tasks",
-    changeLabel: `Epic ${ormAutomationEpic.key} · ${sprintOrmProgress.sprint29Done.length} Done · ${sprintOrmProgress.sprint29InQa.length} in QA · ${sprintOrmProgress.sprint29Todo.length} To Do`,
-    subtext: `Jira: "Epic Link" = ${ormAutomationEpic.key} AND sprint = "${sprintMeta.currentSprint.name}"`,
+    changeLabel: `Epic ${ormAutomationEpic.key} · ${sprintOrmProgress.currentWindowDone.length} Done · ${sprintOrmProgress.currentWindowInQa.length} in QA · ${sprintOrmProgress.currentWindowInProgress.length} in dev`,
+    subtext: `Jira: parent = ${ormAutomationEpic.key}, modules active in the ${sprintMeta.currentSprint.name}`,
     accent: "violet",
     tickets: sprintOrmAutomationInSprint,
-    ticketsLabel: "Sprint automation tasks",
+    ticketsLabel: "Window automation tasks",
   },
 ];
 
@@ -454,172 +458,349 @@ export type BugPeriodMetrics = {
 };
 
 export const sprintBugMetrics: BugPeriodMetrics = {
-  periodLabel: "Sprint 29",
-  periodRange: "Jul 13 – Jul 31, 2026",
-  detected: 15,
-  resolved: 3,
-  openFromPeriod: 12,
-  resolutionRatePercent: 20,
+  periodLabel: "August, full month (product bugs)",
+  periodRange: "Aug 1 – Aug 31, 2026",
+  detected: 35,
+  resolved: 13,
+  openFromPeriod: 22,
+  resolutionRatePercent: 37,
   sourceNote:
-    'Detected = Jira Bug tickets with Created date in the sprint window (verified Jul 24): project = RWT AND issuetype = Bug AND created >= "2026-07-13" AND created < "2026-08-01".',
+    'Detected = RWT Bug tickets by Created date (verified Sep 1): project = RWT AND issuetype = Bug AND created >= "2026-08-01" AND created < "2026-09-01" returns 43, less 8 infrastructure tickets (RWT-415/416/417 Splunk log forwarder, RWT-488 ORM dev env, RWT-620/626 site slowness, RWT-625 version control, RWT-662 service refactor).',
   contextNote:
-    "15 bugs created during Sprint 29 dates; 3 currently Done. Ticket list below is the same Jira result set.",
+    "35 product bugs created in August; 13 Done, 22 still open. RWT-424 is kept in the count because it hit a client UAT site. Heaviest clusters: Records Retention (4), vendor MFA/2FA security (3), and the KReports scheduler (3, all found by code review). The open headline is RWT-447, an unauthenticated SQL injection in vendor 2FA that appears to allow full MFA bypass; RWT-663 (Oxford AMC save deadlock) and RWT-589 (UCBI Parachute form unusable) are the other Highest-priority items still in flight.",
   tickets: [
     {
-      key: "RWT-304",
+      key: "RWT-420",
       summary:
-        "Fix Reset to Defaults Failure in CS Portal",
-      status: "QA In Progress",
-      created: "2026-07-13",
-      reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-304",
-    },
-    {
-      key: "RWT-309",
-      summary:
-        "Bug - Vendor Circle - State-only search returns no results",
+        "Cathay - Records Retention: a restored record can never be deleted again (restore sets an unclearable per-record legal hold)",
       status: "Done",
-      created: "2026-07-13",
+      created: "2026-08-04",
       reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-309",
+      url: "https://realwired.atlassian.net/browse/RWT-420",
     },
     {
-      key: "RWT-311",
+      key: "RWT-424",
       summary:
-        "First Interstate — deleted \"Reconciled Grade\" option (nocwme) still shows on bid/solicitation views",
+        "SouthState UAT site (jasonsouthstate062024.realwired.com) removed by the 2026-07-30 prod folder cleanup — restored from archive 2026-07-31 (retroactive record)",
+      status: "Done",
+      created: "2026-08-05",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-424",
+    },
+    {
+      key: "RWT-428",
+      summary:
+        "Stock Yards Bank (syb) — Review Type Setup rejects a Review Fee with a decimal value — due 8/19/26",
+      status: "Done",
+      created: "2026-08-06",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-428",
+    },
+    {
+      key: "RWT-432",
+      summary:
+        "Records Retention: master enable/disable switch (System Admin only, off by default)",
+      status: "Done",
+      created: "2026-08-06",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-432",
+    },
+    {
+      key: "RWT-446",
+      summary:
+        "Vendor MFA security code — remove plaintext exposure from UI, reports, audit trail and logs (mask on display, not on persistence; feature-flagged, super-admin exempt)",
+      status: "Done",
+      created: "2026-08-06",
+      reporter: "Ademir Mazer Junior",
+      url: "https://realwired.atlassian.net/browse/RWT-446",
+    },
+    {
+      key: "RWT-447",
+      summary:
+        "Unauthenticated SQL injection in vendor 2FA verification (pincode) — appears to allow full MFA bypass",
+      status: "To Do",
+      created: "2026-08-06",
+      reporter: "Ademir Mazer Junior",
+      url: "https://realwired.atlassian.net/browse/RWT-447",
+    },
+    {
+      key: "RWT-453",
+      summary:
+        "Records Retention: Monthly Report Recipients won't persist, blocking enable (deadlock)",
+      status: "Done",
+      created: "2026-08-07",
+      reporter: "Marvs Medrano",
+      url: "https://realwired.atlassian.net/browse/RWT-453",
+    },
+    {
+      key: "RWT-454",
+      summary: "Records Retention: Record Retention Management page throws Database failure",
+      status: "Done",
+      created: "2026-08-07",
+      reporter: "Marvs Medrano",
+      url: "https://realwired.atlassian.net/browse/RWT-454",
+    },
+    {
+      key: "RWT-457",
+      summary:
+        "Prosperity Bank — Vendor Circle import fails with 'Failed to retrieve data from Circle. HTTP 500' for vendor Colleen Blumenthal",
+      status: "Done",
+      created: "2026-08-07",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-457",
+    },
+    {
+      key: "RWT-463",
+      summary:
+        "Vendor MFA security code — stop feeding the field-level audit trail and KReports (st_Solicitation & st_ReviewSolicitation)",
+      status: "To Do",
+      created: "2026-08-10",
+      reporter: "Ademir Mazer Junior",
+      url: "https://realwired.atlassian.net/browse/RWT-463",
+    },
+    {
+      key: "RWT-465",
+      summary:
+        "Community Bank / CBNA (File #1366) — Parachute Technical Review generated but not retrievable and cannot be re-ordered (recurrence of the fixed RWT-371 defect)",
+      status: "Done",
+      created: "2026-08-11",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-465",
+    },
+    {
+      key: "RWT-467",
+      summary:
+        "Washington Trust Bank (WaTrust) — Run Scheduled Reports job hung on the 8/11/2026 run, still not completing (ZD 8757)",
       status: "Review",
-      created: "2026-07-13",
+      created: "2026-08-12",
       reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-311",
+      url: "https://realwired.atlassian.net/browse/RWT-467",
     },
     {
-      key: "RWT-312",
+      key: "RWT-483",
       summary:
-        "YC – Vendor Circle redirect not applied on /review/request.php and /vendor/requests.php (RWT-220 follow-up)",
+        "Request Wizard Step 2 — Add Parcel does nothing after the required Parcel # field is deleted",
       status: "To Do",
-      created: "2026-07-14",
+      created: "2026-08-14",
       reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-312",
+      url: "https://realwired.atlassian.net/browse/RWT-483",
     },
     {
-      key: "RWT-314",
+      key: "RWT-486",
       summary:
-        "Zip Code Management — \"Zip County\" search returns no results (basic and advanced search)",
+        "SECURITY - Review Type Setup save accepts submissions from non-admin users (system wide)",
       status: "To Do",
-      created: "2026-07-14",
+      created: "2026-08-14",
       reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-314",
+      url: "https://realwired.atlassian.net/browse/RWT-486",
     },
     {
-      key: "RWT-315",
-      summary:
-        "Vendor Circle — \"Send for Review\" (external review) bids do not appear in the vendor's \"My Bids\" tab",
-      status: "To Do",
-      created: "2026-07-15",
-      reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-315",
-    },
-    {
-      key: "RWT-321",
-      summary:
-        "Parachute AI Review omits As-Is value from Value Conclusions summary (United Bank, File #103422)",
+      key: "RWT-491",
+      summary: "Parachute AI Review button not available on 1-step request types during review",
       status: "Done",
-      created: "2026-07-15",
+      created: "2026-08-17",
       reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-321",
+      url: "https://realwired.atlassian.net/browse/RWT-491",
     },
     {
-      key: "RWT-326",
+      key: "RWT-492",
       summary:
-        "Vendor Circle – Documents replaced via the Vendor Updates tab are not retained in the vendor history panel",
+        "Review Assignment Not Accepted Reminder email only goes to the JM, never to the Reviewer (all clients)",
       status: "To Do",
-      created: "2026-07-15",
+      created: "2026-08-17",
       reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-326",
+      url: "https://realwired.atlassian.net/browse/RWT-492",
     },
     {
-      key: "RWT-328",
+      key: "RWT-497",
       summary:
-        "Vendor Circle – Pending invites remain blank across all VC test envs (stage/bank1/bank2); repair + worker restart no longer clears them — blocks QA",
+        'Loan Officer gets a non-functional "Order ERIS report" button on Property records (button and modal use different gates)',
       status: "To Do",
-      created: "2026-07-15",
-      reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-328",
+      created: "2026-08-18",
+      reporter: "Marvs Medrano",
+      url: "https://realwired.atlassian.net/browse/RWT-497",
     },
     {
-      key: "RWT-329",
+      key: "RWT-546",
       summary:
-        "Zions Bancorp — MFA blocks vendor office assistant (notified party) from acting; code only delivered to primary email",
-      status: "Blocked",
-      created: "2026-07-15",
-      reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-329",
+        "KReports scheduler: catch(Error) never clears the 'P' status, causing infinite retry and permanent starvation of all later reports (kschedulingcronhandler.php:147-149)",
+      status: "To Do",
+      created: "2026-08-18",
+      reporter: "David Eloy",
+      url: "https://realwired.atlassian.net/browse/RWT-546",
     },
     {
-      key: "RWT-335",
+      key: "RWT-547",
       summary:
-        "United Bank — Parachute Technical Review missed the As-Is value (File 103422)",
+        "KReports initializeScheduledReports(): undefined variable makes setSchedulerStatus() a silent no-op (UPDATE ... WHERE id='') (kschedulingcronhandler.php:58)",
+      status: "To Do",
+      created: "2026-08-18",
+      reporter: "David Eloy",
+      url: "https://realwired.atlassian.net/browse/RWT-547",
+    },
+    {
+      key: "RWT-574",
+      summary:
+        "KReports scheduler: failed report emails are saved as status='sent' — Send() return value discarded and $exceptions never enabled (kschedulingcronhandler.php:331-350)",
+      status: "To Do",
+      created: "2026-08-19",
+      reporter: "David Eloy",
+      url: "https://realwired.atlassian.net/browse/RWT-574",
+    },
+    {
+      key: "RWT-578",
+      summary:
+        "Logical Routing does not evaluate all selected criteria — requests route to the wrong Job Manager (all banks)",
       status: "Done",
-      created: "2026-07-16",
+      created: "2026-08-20",
       reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-335",
+      url: "https://realwired.atlassian.net/browse/RWT-578",
     },
     {
-      key: "RWT-344",
+      key: "RWT-589",
       summary:
-        "Prevent duplicate participant emails & add real-time email validation during onboarding",
+        "United Community Bank — Parachute review form: checkboxes can't be ticked and reviewer comment fields can't be focused - UCBI",
       status: "In Progress",
-      created: "2026-07-20",
-      reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-344",
+      created: "2026-08-21",
+      reporter: "Marvs Medrano",
+      url: "https://realwired.atlassian.net/browse/RWT-589",
     },
     {
-      key: "RWT-350",
+      key: "RWT-616",
       summary:
-        "Zions Bancorp — File-upload fields (Invoice / Review Invoice) render as plain text fields on the Update Info page instead of upload widgets",
-      status: "In Progress",
-      created: "2026-07-21",
-      reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-350",
-    },
-    {
-      key: "RWT-356",
-      summary:
-        "Bank of California – Vendor Circle login fails for existing/verified vendor (Gary Alexander) — 2nd occurrence of RWT-284",
+        "S&T Bank (applies to all clients) — add Prior Appraisal Value and Prior Appraised Date to the do-not-clone field list used by Copy All in Request Wizard Portfolio mode (ZD 8689)",
       status: "To Do",
-      created: "2026-07-22",
+      created: "2026-08-24",
       reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-356",
+      url: "https://realwired.atlassian.net/browse/RWT-616",
     },
     {
-      key: "RWT-362",
+      key: "RWT-617",
       summary:
-        "Fix module unlocking, Define Core System progress calculation, and Go Live Timeline visibility issues",
-      status: "Review",
-      created: "2026-07-23",
+        "Page No. column added to the request-details table, and page footers disagree with the real page count",
+      status: "Done",
+      created: "2026-08-24",
       reporter: "Diego De Grandi",
-      url: "https://realwired.atlassian.net/browse/RWT-362",
+      url: "https://realwired.atlassian.net/browse/RWT-617",
+    },
+    {
+      key: "RWT-619",
+      summary:
+        "KReports result grid: sorting by a CustomFunction fee column silently empties the report (Vendor Fee, 2% or $2.50 min)",
+      status: "To Do",
+      created: "2026-08-24",
+      reporter: "Marvs Medrano",
+      url: "https://realwired.atlassian.net/browse/RWT-619",
+    },
+    {
+      key: "RWT-621",
+      summary:
+        "Prosperity Bank — resent Appraisal Ready & Review Complete emails use a different subject line and drop the 'File #' wording",
+      status: "In Progress",
+      created: "2026-08-25",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-621",
+    },
+    {
+      key: "RWT-623",
+      summary:
+        "Remove the code that allow the Vendor Primary email to be overwritten by the Office Bidder email upon credential request",
+      status: "Done",
+      created: "2026-08-25",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-623",
+    },
+    {
+      key: "RWT-624",
+      summary:
+        "Enable change log auditing for all remaining un-audited fields on the Request record",
+      status: "To Do",
+      created: "2026-08-25",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-624",
+    },
+    {
+      key: "RWT-652",
+      summary: 'Emails list: sorting by "To" empties the list instead of reordering it',
+      status: "To Do",
+      created: "2026-08-28",
+      reporter: "Marvs Medrano",
+      url: "https://realwired.atlassian.net/browse/RWT-652",
+    },
+    {
+      key: "RWT-659",
+      summary:
+        "Request Comment attachments are duplicated into the Request Documents subpanel once a Request Document has been uploaded (ZD 8946 — South State Bank, global)",
+      status: "To Do",
+      created: "2026-08-31",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-659",
+    },
+    {
+      key: "RWT-660",
+      summary:
+        "Workflow does not auto-advance after a vendor report upload, and Engagement Confirmation Date is written repeatedly to the change log (TXGLO, potentially global)",
+      status: "To Do",
+      created: "2026-08-31",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-660",
+    },
+    {
+      key: "RWT-663",
+      summary:
+        "Oxford AMC — Create a Request Step 3: Save Request becomes permanently unresponsive after a required-field validation error is corrected",
+      status: "In Progress",
+      created: "2026-08-31",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-663",
+    },
+    {
+      key: "RWT-666",
+      summary:
+        "Prosperity Bank — XSRF error page on YouConnect auto log out since SSO was turned on (ZD 9003)",
+      status: "To Do",
+      created: "2026-08-31",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-666",
+    },
+    {
+      key: "RWT-668",
+      summary:
+        "Portfolio/Project: a project whose requests are all in an active bulk solicitation disappears from the project list and search",
+      status: "To Do",
+      created: "2026-08-31",
+      reporter: "Marvs Medrano",
+      url: "https://realwired.atlassian.net/browse/RWT-668",
+    },
+    {
+      key: "RWT-669",
+      summary:
+        "Beacon Bank — outbound notifications still sent from the pre-rebrand no-reply@berkshirebank.realwired.com address",
+      status: "To Do",
+      created: "2026-08-31",
+      reporter: "Diego De Grandi",
+      url: "https://realwired.atlassian.net/browse/RWT-669",
     },
   ],
 };
 
 export const sprintNarrative = {
   description:
-    "Sprint view focuses on QA queue depth, bugs detected this sprint (created in sprint dates), and team ORM automation module progress.",
+    "Sprint 33 view focuses on QA queue depth, bugs detected in the month, and ORM automation module progress.",
   highlight:
-    "Sprint 29 mid-sprint: 14 items (29 Story Points) in QA Ready / QA In Progress, 38 Done of 164 committed, and 15 bugs detected in-sprint.",
+    "Sprint 33 (Aug 31 – Sep 7), day 2 of 7: 7 items already moved to Done against the prior week's 34, 15 tickets sitting in QA, and 35 product bugs created in August (13 Done). ORM epic RWT-107 is now at 27 of 28 modules — only st_VendorLetters is left, and it is in QA.",
   contextNote:
-    "Ready for PROD remains a deploy/sign-off tail — not QA capacity. Call that out so velocity conversations stay honest.",
+    "Sprint 33 is the single active sprint and already carries work from both boards (Projects & Features and YP+VC+Onboarding), so it is the whole picture rather than one lane of it. The QA queue tripled to 15 because the Parachute Standalone story set reached QA together.",
 };
 
 export const throughputNarrative = {
   label: "Project throughput",
   description:
-    "Created vs resolved measures overall project intake and Done-column close-outs across YP, YCVC, RM, and ARF — not tickets moving through the QA test lane.",
+    "Created vs resolved measures overall project intake and Done-column close-outs across all five projects — YP, YCVC, RM, ARF and RWT — not tickets moving through the QA test lane.",
   highlight:
-    "YTD resolution rate is 72.6% (1,289 Done ÷ 1,775 created), up from 71.3% at end of June. Resolved volume has stayed ahead of created since April.",
+    "YTD resolution rate is 78.3% (1,116 Done ÷ 1,425 created). RWT now accounts for 656 of the created total and every close-out since July.",
   contextNote:
-    "Live Jira as of Jul 24, 2026. July MTD: 72 created · 75 resolved (104% monthly rate).",
+    "Live Jira as of Sep 1, 2026. Two corrections land here: the filter now excludes Xray artifacts by their real issue-type name ('Test', not 'Xray Test'), removing 1,281 YP test cases that were being counted as product throughput; and RWT is included, so the series follows the work as it consolidated. July: 179 created · 86 resolved (48%). August: 256 created · 119 resolved (46%) — intake is outpacing close-outs as the Parachute and onboarding scope lands.",
 };
 
 /** Monthly bug snapshot */
@@ -664,15 +845,15 @@ export const projectCoverageKpis: ProjectCoverageKpi[] = [
     shortName: "YP",
     overallCoveragePercent: 95,
     manualCoveragePercent: 95,
-    automationCoveragePercent: 65,
-    criticalWorkflowAutomationPercent: 90,
+    automationCoveragePercent: 83,
+    criticalWorkflowAutomationPercent: 95,
     xrayArtifacts: 1004,
     automationTests: 159,
     automationTestsPrevious: 76,
     highlight:
-      "App-wide automation at 65%; critical Request Lifecycle workflows at 90% (up from 72%).",
+      "App-wide automation at 83%; critical Request Lifecycle workflows at 95% (up from 72%).",
     automationNote:
-      "159 Playwright tests (+109% from 76) · 65% app-wide automation · 90% critical workflow coverage (Request Lifecycle).",
+      "159 Playwright tests (+109% from 76) · 83% app-wide automation · 95% critical workflow coverage (Request Lifecycle).",
   },
   {
     id: "ycvc",
@@ -709,6 +890,19 @@ export const projectCoverageKpis: ProjectCoverageKpi[] = [
       "62 manual cases across Order Parachute, One Step Process, Template Editor Regression, and ARF tickets.",
     automationNote: "Broader automation coverage still outstanding.",
   },
+  {
+    id: "parachute-standalone",
+    name: "Parachute Standalone",
+    shortName: "PSA",
+    overallCoveragePercent: 50,
+    manualCoveragePercent: 50,
+    automationCoveragePercent: 0,
+    testCases: 24,
+    highlight:
+      "4 of 8 product areas have manual Xray cases (epic RWT-310), distinct from ARF: Start a Review / intake (12), in-product report view (2), Workbook Editor (4), Organization (6). Uncovered: authentication, app chrome / navigation, Reviews list, and sign & finalize. 24 cases total.",
+    automationNote:
+      "No automation yet — the product is still in build and the suite would churn against it.",
+  },
 ];
 
 export type BugMonth = {
@@ -717,15 +911,24 @@ export type BugMonth = {
   resolved: number;
 };
 
-/** Portfolio-wide YTD bug counts — detected = Created date in month; replace with verified Jira pull */
+/**
+ * Portfolio-wide YTD product-bug counts — Bug issue type across all five projects
+ * (YP + YCVC + RM + ARF + RWT), live Jira pull Sep 1, 2026.
+ *
+ * Rebuilt on a single consistent source. The previous series was split — early
+ * months counted YP bugs and later months counted RWT bugs — which made the trend
+ * line meaningless. Detected = Created date in month; resolved = status Done.
+ * August excludes 8 infrastructure tickets; every other month is unfiltered.
+ */
 export const bugsByMonth: BugMonth[] = [
-  { month: "Jan 26", detected: 18, resolved: 12 },
-  { month: "Feb 26", detected: 22, resolved: 19 },
-  { month: "Mar 26", detected: 45, resolved: 38 },
-  { month: "Apr 26", detected: 28, resolved: 31 },
-  { month: "May 26", detected: 24, resolved: 26 },
-  { month: "Jun 26", detected: 30, resolved: 27 },
-  { month: "Jul 26", detected: 11, resolved: 3 },
+  { month: "Jan 26", detected: 7, resolved: 4 },
+  { month: "Feb 26", detected: 2, resolved: 2 },
+  { month: "Mar 26", detected: 25, resolved: 21 },
+  { month: "Apr 26", detected: 12, resolved: 11 },
+  { month: "May 26", detected: 14, resolved: 11 },
+  { month: "Jun 26", detected: 27, resolved: 8 },
+  { month: "Jul 26", detected: 42, resolved: 22 },
+  { month: "Aug 26", detected: 35, resolved: 13 },
 ];
 
 export type BugsByProject = {
@@ -735,20 +938,40 @@ export type BugsByProject = {
   months: BugMonth[];
 };
 
-/** Per-project YTD bug drill-down — detected = Created date in month; placeholder until Jira pull */
+/**
+ * Per-project YTD bug drill-down — live Jira Sep 1, 2026. ARF is absent because no
+ * Bug-type tickets were filed against it this year; its defects were logged in YP
+ * or, from June, in RWT.
+ */
 export const bugsByProject: BugsByProject[] = [
+  {
+    projectId: "rwt",
+    projectName: "RWT Consolidated",
+    shortName: "RWT",
+    months: [
+      { month: "Jan", detected: 0, resolved: 0 },
+      { month: "Feb", detected: 0, resolved: 0 },
+      { month: "Mar", detected: 0, resolved: 0 },
+      { month: "Apr", detected: 0, resolved: 0 },
+      { month: "May", detected: 2, resolved: 1 },
+      { month: "Jun", detected: 26, resolved: 7 },
+      { month: "Jul", detected: 42, resolved: 22 },
+      { month: "Aug", detected: 35, resolved: 13 },
+    ],
+  },
   {
     projectId: "yp",
     projectName: "YouConnect Production",
     shortName: "YP",
     months: [
-      { month: "Jan", detected: 8, resolved: 6 },
-      { month: "Feb", detected: 10, resolved: 9 },
-      { month: "Mar", detected: 20, resolved: 18 },
-      { month: "Apr", detected: 12, resolved: 14 },
-      { month: "May", detected: 10, resolved: 12 },
-      { month: "Jun", detected: 4, resolved: 7 },
-      { month: "Jul", detected: 3, resolved: 1 },
+      { month: "Jan", detected: 5, resolved: 2 },
+      { month: "Feb", detected: 2, resolved: 2 },
+      { month: "Mar", detected: 7, resolved: 6 },
+      { month: "Apr", detected: 4, resolved: 4 },
+      { month: "May", detected: 11, resolved: 9 },
+      { month: "Jun", detected: 1, resolved: 1 },
+      { month: "Jul", detected: 0, resolved: 0 },
+      { month: "Aug", detected: 0, resolved: 0 },
     ],
   },
   {
@@ -756,13 +979,14 @@ export const bugsByProject: BugsByProject[] = [
     projectName: "YC Vendor Circle",
     shortName: "YCVC",
     months: [
-      { month: "Jan", detected: 4, resolved: 3 },
-      { month: "Feb", detected: 5, resolved: 4 },
-      { month: "Mar", detected: 12, resolved: 10 },
-      { month: "Apr", detected: 7, resolved: 8 },
-      { month: "May", detected: 6, resolved: 6 },
-      { month: "Jun", detected: 8, resolved: 7 },
-      { month: "Jul", detected: 4, resolved: 1 },
+      { month: "Jan", detected: 0, resolved: 0 },
+      { month: "Feb", detected: 0, resolved: 0 },
+      { month: "Mar", detected: 14, resolved: 12 },
+      { month: "Apr", detected: 3, resolved: 3 },
+      { month: "May", detected: 0, resolved: 0 },
+      { month: "Jun", detected: 0, resolved: 0 },
+      { month: "Jul", detected: 0, resolved: 0 },
+      { month: "Aug", detected: 0, resolved: 0 },
     ],
   },
   {
@@ -770,27 +994,14 @@ export const bugsByProject: BugsByProject[] = [
     projectName: "Reporting Microservice",
     shortName: "RM",
     months: [
-      { month: "Jan", detected: 3, resolved: 2 },
-      { month: "Feb", detected: 4, resolved: 3 },
-      { month: "Mar", detected: 8, resolved: 6 },
-      { month: "Apr", detected: 5, resolved: 5 },
-      { month: "May", detected: 4, resolved: 4 },
-      { month: "Jun", detected: 6, resolved: 5 },
-      { month: "Jul", detected: 2, resolved: 1 },
-    ],
-  },
-  {
-    projectId: "arf",
-    projectName: "Parachute / AI Review Forms",
-    shortName: "ARF",
-    months: [
-      { month: "Jan", detected: 3, resolved: 1 },
-      { month: "Feb", detected: 3, resolved: 3 },
-      { month: "Mar", detected: 5, resolved: 4 },
-      { month: "Apr", detected: 4, resolved: 4 },
-      { month: "May", detected: 4, resolved: 4 },
-      { month: "Jun", detected: 12, resolved: 8 },
-      { month: "Jul", detected: 2, resolved: 0 },
+      { month: "Jan", detected: 2, resolved: 2 },
+      { month: "Feb", detected: 0, resolved: 0 },
+      { month: "Mar", detected: 4, resolved: 3 },
+      { month: "Apr", detected: 5, resolved: 4 },
+      { month: "May", detected: 1, resolved: 1 },
+      { month: "Jun", detected: 0, resolved: 0 },
+      { month: "Jul", detected: 0, resolved: 0 },
+      { month: "Aug", detected: 0, resolved: 0 },
     ],
   },
 ];
@@ -817,12 +1028,12 @@ export type AutomationRunSpec = {
   note?: string;
 };
 
-/** YouConnect full regression — 2026-07-14 CI run (stage.realwired.com) */
+/** YouConnect full regression — 2026-08-26 CI run (stage.realwired.com) */
 export const latestPlaywrightRun = {
   title: "YouConnect — Playwright Run",
   subtitle: "Full regression suite · CI mode · headless · Chromium · 1 retry",
   environment: "stage.realwired.com",
-  startedAt: "2026-07-14 20:49:44 UTC",
+  startedAt: "2026-08-26",
   durationMin: 100.3,
   totalTests: 113,
   passed: 105,
@@ -832,7 +1043,7 @@ export const latestPlaywrightRun = {
   passRatePercent: 94.6,
   passRateNote: "105/111 executed (excluding skipped)",
   updateNote:
-    "market-area-crud-smoke:266 is now fixed & verified (8/8 passed on re-run). Root cause: the requests-list search was left in Advanced mode — it now switches to Basic Search first. Counts below are the original run snapshot; only the two RWT-314 canaries remain red.",
+    "The Aug 19 re-run reproduced the same counts as the Jul 14 baseline. market-area-crud-smoke:266 is fixed & verified (8/8 passed on re-run) — root cause: the requests-list search was left in Advanced mode, and it now switches to Basic Search first. Only the two RWT-314 canaries remain red.",
   failureBreakdown: [
     {
       count: 2,
@@ -861,7 +1072,7 @@ export const automationRunResults: AutomationRunResult[] = [
     flaky: 2,
     skipped: 0,
     passRate: 100,
-    date: "Jul 14 2026",
+    date: "Aug 19 2026",
     source: "CI · stage.realwired.com",
     status: "unstable",
     note: "2 flaky on retry — cancel-engagement, revision-report",
@@ -873,7 +1084,7 @@ export const automationRunResults: AutomationRunResult[] = [
     flaky: 1,
     skipped: 2,
     passRate: 100,
-    date: "Jul 14 2026",
+    date: "Aug 19 2026",
     source: "CI · stage.realwired.com",
     status: "unstable",
     note: "LO login flaky on retry · 2 skipped (invalid password, lockout)",
@@ -884,7 +1095,7 @@ export const automationRunResults: AutomationRunResult[] = [
     failed: 0,
     skipped: 0,
     passRate: 100,
-    date: "Jul 14 2026",
+    date: "Aug 19 2026",
     source: "CI · stage.realwired.com",
     status: "passing",
   },
@@ -895,7 +1106,7 @@ export const automationRunResults: AutomationRunResult[] = [
     flaky: 0,
     skipped: 0,
     passRate: 92,
-    date: "Jul 14 2026",
+    date: "Aug 19 2026",
     source: "CI · stage.realwired.com",
     status: "unstable",
     note: "2 RWT-314 canaries expected · market-area:266 fixed since run",
@@ -1149,12 +1360,12 @@ export const automationRunSummary = {
   totalSpecFiles: automationRunSpecDetails.length,
   totalAutomatedTests: latestPlaywrightRun.totalTests,
   /** YouConnect application-wide automation */
-  appWideAutomationPercent: 65,
+  appWideAutomationPercent: 83,
   appWideAutomationTargetPercent: 85,
   /** YouConnect critical workflow automation (Request Lifecycle) */
-  criticalWorkflowAutomationMin: 90,
-  criticalWorkflowAutomationMax: 90,
-  criticalWorkflowAutomationMid: 90,
+  criticalWorkflowAutomationMin: 95,
+  criticalWorkflowAutomationMax: 95,
+  criticalWorkflowAutomationMid: 95,
   criticalWorkflowAutomationPrevious: 72,
   criticalWorkflowAutomationTargetPercent: 100,
   /** @deprecated use appWideAutomationTargetPercent */
@@ -1172,7 +1383,7 @@ export const automationSummary = {
   criticalWorkflowAutomationMid: automationRunSummary.criticalWorkflowAutomationMid,
   manualCriticalCoverage: 95,
   requestLifecycleSmoke: "Completed",
-  ormAutomationStatus: "10/26 modules Done on RWT-107",
+  ormAutomationStatus: `${sprintOrmProgress.done}/${sprintOrmProgress.totalModules} modules Done on RWT-107`,
   frameworksInUse: ["Playwright"],
   ciIntegrated: automationRunSummary.ciIntegrated,
   ciStatus: automationRunSummary.ciStatus,

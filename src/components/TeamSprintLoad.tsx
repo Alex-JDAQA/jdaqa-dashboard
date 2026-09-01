@@ -1,14 +1,16 @@
-import { ExternalLink, Users } from "lucide-react";
-import { sprintOrmProgress } from "../data/metrics";
+import { useState } from "react";
+import { ChevronDown, ChevronRight, ExternalLink, Users } from "lucide-react";
+import { sprintMeta, sprintOrmProgress } from "../data/metrics";
 
 export function TeamSprintLoad() {
+  const [completedOpen, setCompletedOpen] = useState(false);
   const ormPct = Math.round((sprintOrmProgress.done / sprintOrmProgress.totalModules) * 100);
-  const sprint29Total =
-    sprintOrmProgress.sprint29Done.length +
-    sprintOrmProgress.sprint29InQa.length +
-    sprintOrmProgress.sprint29Todo.length;
-  const sprint29DonePct = Math.round(
-    (sprintOrmProgress.sprint29Done.length / sprint29Total) * 100,
+  const windowTotal =
+    sprintOrmProgress.currentWindowDone.length +
+    sprintOrmProgress.currentWindowInQa.length +
+    sprintOrmProgress.currentWindowInProgress.length;
+  const windowDonePct = Math.round(
+    (sprintOrmProgress.currentWindowDone.length / windowTotal) * 100,
   );
 
   return (
@@ -46,19 +48,63 @@ export function TeamSprintLoad() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-4">
         <Stat label="Done" value={sprintOrmProgress.done} tone="success" />
         <Stat label="In QA" value={sprintOrmProgress.inQa} tone="warning" />
+        <Stat label="In dev" value={sprintOrmProgress.inProgress} tone="muted" />
         <Stat label="Queued" value={sprintOrmProgress.todo} tone="muted" />
+      </div>
+
+      <div className="mt-4">
+        <button
+          type="button"
+          onClick={() => setCompletedOpen((open) => !open)}
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-border-subtle bg-surface-overlay px-3 py-2.5 text-left"
+          aria-expanded={completedOpen}
+        >
+          <div className="flex items-center gap-2">
+            {completedOpen ? (
+              <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" />
+            ) : (
+              <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" />
+            )}
+            <span className="text-xs font-medium tracking-wide text-text-muted uppercase">
+              Completed modules
+            </span>
+            <span className="rounded bg-surface px-2 py-0.5 font-mono text-[11px] text-text-muted">
+              {sprintOrmProgress.completedModules.length}
+            </span>
+          </div>
+          <span className="text-xs text-text-muted">{completedOpen ? "Hide" : "Show"}</span>
+        </button>
+
+        {completedOpen && (
+          <ul className="mt-3 grid max-h-80 gap-px overflow-y-auto rounded-xl border border-border-subtle bg-border-subtle sm:grid-cols-2">
+            {sprintOrmProgress.completedModules.map((mod) => (
+              <li key={mod.key} className="bg-surface-overlay px-3 py-2">
+                <a
+                  href={mod.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-accent hover:underline"
+                >
+                  {mod.key}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+                <p className="mt-0.5 text-sm leading-snug text-text">{mod.summary}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-border-subtle bg-surface-overlay p-4">
           <p className="text-xs font-medium tracking-wide text-text-muted uppercase">
-            Shipped last sprint (Sprint 28)
+            {`Closed in prior window (${sprintMeta.previousSprint.range})`}
           </p>
           <ul className="mt-2 space-y-1">
-            {sprintOrmProgress.sprint28Delivered.map((item) => (
+            {sprintOrmProgress.priorWindowDelivered.map((item) => (
               <li key={item} className="text-sm text-text">
                 · {item}
               </li>
@@ -68,47 +114,51 @@ export function TeamSprintLoad() {
         <div className="rounded-xl border border-border-subtle bg-surface-overlay p-4">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-medium tracking-wide text-text-muted uppercase">
-              Sprint 29 progress
+              {sprintMeta.currentSprint.name} progress
             </p>
             <span className="text-xs text-text-muted">
-              {sprintOrmProgress.sprint29Done.length}/{sprint29Total} Done · {sprint29DonePct}%
+              {sprintOrmProgress.currentWindowDone.length}/{windowTotal} Done · {windowDonePct}%
             </span>
           </div>
           <ModuleGroup
             label="Done"
-            items={sprintOrmProgress.sprint29Done}
+            items={sprintOrmProgress.currentWindowDone}
             tone="success"
           />
           <ModuleGroup
             label="In QA"
-            items={sprintOrmProgress.sprint29InQa}
+            items={sprintOrmProgress.currentWindowInQa}
             tone="warning"
           />
-          <ModuleGroup
-            label="To Do"
-            items={sprintOrmProgress.sprint29Todo}
-            tone="muted"
-          />
+          {sprintOrmProgress.currentWindowInProgress.length > 0 && (
+            <ModuleGroup
+              label="In dev"
+              items={sprintOrmProgress.currentWindowInProgress}
+              tone="muted"
+            />
+          )}
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl border border-border-subtle bg-surface-overlay p-4">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-medium tracking-wide text-text-muted uppercase">
-            Backlog · To Do
-          </p>
-          <span className="text-xs text-text-muted">
-            {sprintOrmProgress.backlogTodo.length} modules · Sprint 30+
-          </span>
+      {sprintOrmProgress.backlogTodo.length > 0 && (
+        <div className="mt-4 rounded-xl border border-border-subtle bg-surface-overlay p-4">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-medium tracking-wide text-text-muted uppercase">
+              Backlog · To Do
+            </p>
+            <span className="text-xs text-text-muted">
+              {sprintOrmProgress.backlogTodo.length} modules
+            </span>
+          </div>
+          <ul className="mt-3 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+            {sprintOrmProgress.backlogTodo.map((item) => (
+              <li key={item} className="text-sm text-text">
+                · {item}
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="mt-3 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
-          {sprintOrmProgress.backlogTodo.map((item) => (
-            <li key={item} className="text-sm text-text">
-              · {item}
-            </li>
-          ))}
-        </ul>
-      </div>
+      )}
 
       <p className="mt-4 rounded-lg border border-border-subtle bg-surface-overlay px-3 py-2 text-xs leading-relaxed text-text-muted">
         {sprintOrmProgress.contextNote}

@@ -440,195 +440,364 @@ export const sprintDeliveredTickets: SprintTicket[] = [
   },
 ];
 
-/**
- * Moved to Done since Sprint 33 opened.
- * Live Jira Sep 1, 2026: `project = RWT AND status CHANGED TO Done
- * AFTER "2026-08-31 14:50"`. Project-wide to match the benchmark's basis;
- * six of the seven are Sprint 33 tickets (RWT-657 is not in the sprint).
- */
+/** Moved to Done since Sprint 35 opened.
+ * Live Jira REST Sep 18, 2026: project = RWT AND status CHANGED TO Done AFTER "2026-09-14 15:05". */
 export const sprintCurrentDeliveredTickets: SprintTicket[] = [
   {
-    key: "RWT-126",
-    summary: "User Management",
+    key: "RWT-815",
+    summary:
+      "Citation: resolve a lettered addendum reference (Addenda E, or a bare E) to its divider page",
     status: "Done",
-    category: "ORM regression automation",
+    category: "Sub-task",
     priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-126",
+    url: "https://realwired.atlassian.net/browse/RWT-815",
   },
   {
-    key: "RWT-162",
-    summary:
-      "CLONE - 187637322 Value Premise BId Panel - Need to add 4 more rows (First Horizon & WaFd & Simmons)",
+    key: "RWT-798",
+    summary: "Access: ssm:StartSession on parachute-dev-bastion so we can deploy Parachute Standalone",
     status: "Done",
     category: "Task",
     priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-162",
+    url: "https://realwired.atlassian.net/browse/RWT-798",
   },
   {
-    key: "RWT-499",
-    summary: "Sign in with CIM on the standalone login screen",
+    key: "RWT-792",
+    summary:
+      "Workbook Editor: a deleted finding still renders in Preview, so the recipient sees a finding the reviewer removed (parachute-dev)",
+    status: "Done",
+    category: "Sub-task",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-792",
+  },
+  {
+    key: "RWT-789",
+    summary:
+      "Workbook Editor: the Administrative Review Attestation can be signed while checklist rows are still AI-only, with no human decision on any row (parachute-dev)",
+    status: "Done",
+    category: "Sub-task",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-789",
+  },
+  {
+    key: "RWT-787",
+    summary:
+      "Workbook Editor: Remove is missing on template-served sections, which is the case RWT-720 actually reported",
+    status: "Done",
+    category: "Sub-task",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-787",
+  },
+  {
+    key: "RWT-786",
+    summary:
+      "parachute-ui e2e: the signature pad's test stroke fails intermittently in CI because it does not wait for ink",
+    status: "Done",
+    category: "Task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-786",
+  },
+  {
+    key: "RWT-785",
+    summary: "parachute-ui CI: shard the Playwright suite so a PR does not wait 20 minutes for its tests",
+    status: "Done",
+    category: "Task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-785",
+  },
+  {
+    key: "RWT-784",
+    summary:
+      "Workbook Editor: Remove is frozen into a section at creation, so sections added before the feature shipped can never be removed",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-784",
+  },
+  {
+    key: "RWT-783",
+    summary:
+      "\"This review could not be rendered as a PDF. Try again; if it keeps failing, report it.\" is encountered when downloading a review",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Highest",
+    url: "https://realwired.atlassian.net/browse/RWT-783",
+  },
+  {
+    key: "RWT-779",
+    summary:
+      "Workbook Editor: a cloned element is appended at the end of the list instead of right after the element it was cloned from",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Lowest",
+    url: "https://realwired.atlassian.net/browse/RWT-779",
+  },
+  {
+    key: "RWT-778",
+    summary: "Be able to delete a section",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-778",
+  },
+  {
+    key: "RWT-777",
+    summary:
+      "Multiple pages issue: Only one page is appearing and the other pages are not pointint to page System3",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-777",
+  },
+  {
+    key: "RWT-776",
+    summary: "Confidence is always coming as 0%. check data if this is a FE or data issue",
+    status: "Done",
+    category: "Sub-task",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-776",
+  },
+  {
+    key: "RWT-775",
+    summary: "Logo appears to be broken.",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-775",
+  },
+  {
+    key: "RWT-773",
+    summary:
+      "Every prose block of a technical review prints \"Unsupported capability: requested toolbar ignored\" to the reader",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-773",
+  },
+  {
+    key: "RWT-768",
+    summary:
+      "Fifth Third: vendor linked to the wrong Vendor Circle profile — circle shows another vendor's data",
+    status: "Done",
+    category: "Bug",
+    priority: "Highest",
+    url: "https://realwired.atlassian.net/browse/RWT-768",
+  },
+  {
+    key: "RWT-754",
+    summary: "Report date shows one day earlier in the preview than in the stored data and the PDF",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-754",
+  },
+  {
+    key: "RWT-752",
+    summary:
+      "Technical Review: Indicated Range vs Concluded Value text overlaps and the uses the word \"currency\" instead of currency symbol",
+    status: "Done",
+    category: "Sub-task",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-752",
+  },
+  {
+    key: "RWT-744",
+    summary: "Comment icon only opens the row, never closes it",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-744",
+  },
+  {
+    key: "RWT-731",
+    summary: "Add feature flag support in Circle - needed for several stories",
+    status: "Done",
+    category: "Task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-731",
+  },
+  {
+    key: "RWT-726",
+    summary:
+      "Workbook Editor: clicking a citation (for example \"p.1\") does not take the Source viewer to that page",
+    status: "Done",
+    category: "Sub-task",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-726",
+  },
+  {
+    key: "RWT-720",
+    summary:
+      "Workbook Editor: no Delete action for a section, so an added or duplicated section cannot be removed",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-720",
+  },
+  {
+    key: "RWT-719",
+    summary:
+      "Workbook Editor: a duplicated section is placed last in the document rather than immediately after the section it was copied from",
+    status: "Done",
+    category: "Sub-task",
+    priority: "Lowest",
+    url: "https://realwired.atlassian.net/browse/RWT-719",
+  },
+  {
+    key: "RWT-673",
+    summary: "Reorganize rw-devstack and Dockerfiles to segregate environments",
+    status: "Done",
+    category: "Task",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-673",
+  },
+  {
+    key: "RWT-671",
+    summary: "Integrate the backend",
+    status: "Done",
+    category: "Task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-671",
+  },
+  {
+    key: "RWT-655",
+    summary: "Configure Skycloak — stand up the CIM realm on the managed platform",
+    status: "Done",
+    category: "Parachute Standalone",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-655",
+  },
+  {
+    key: "RWT-532",
+    summary: "Type my signature",
+    status: "Done",
+    category: "Parachute Standalone",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-532",
+  },
+  {
+    key: "RWT-488",
+    summary:
+      "ORM dev environment (yo-176) is down — \"Unable to retrieve system settings: could not find driver\"",
+    status: "Done",
+    category: "Bug",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-488",
+  },
+  {
+    key: "RWT-476",
+    summary: "Parachute Standalone: provision the hosted AWS environment",
+    status: "Done",
+    category: "Parachute Standalone",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-476",
+  },
+  {
+    key: "RWT-294",
+    summary:
+      "Parachute AI Review stuck at \"Initiated\" — webhook says review started, but message never delivered and is not in the DLQ",
+    status: "Done",
+    category: "Bug",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-294",
+  },
+  {
+    key: "RWT-204",
+    summary:
+      " CS Enhancement request - In General Settings - configuration that allows to check the box to always show Report Panel to LO's",
     status: "Done",
     category: "Story",
     priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-499",
-  },
-  {
-    key: "RWT-613",
-    summary: "Genesis Capital - Increase # of Rows - Value Premise Scenario",
-    status: "Done",
-    category: "Task",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-613",
-  },
-  {
-    key: "RWT-646",
-    summary: "Parse the engine result into the workbook document and persist it",
-    status: "Done",
-    category: "Task",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-646",
-  },
-  {
-    key: "RWT-657",
-    summary:
-      "Set up Vitest in parachute-ui and replace the archived check scripts with real unit tests",
-    status: "Done",
-    category: "Task",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-657",
-  },
-  {
-    key: "RWT-664",
-    summary:
-      "Provision a CIM organization into the Parachute mirror — command, runbook and the local seed",
-    status: "Done",
-    category: "Task",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-664",
+    url: "https://realwired.atlassian.net/browse/RWT-204",
   },
 ];
 
-/** Sprint 33 QA Ready / QA In Progress — live Jira Sep 1, 2026. */
+/** Sprint 35 QA Ready / QA In Progress — live Jira REST Sep 18, 2026. */
 export const sprintInQaTickets: SprintTicket[] = [
   {
-    key: "RWT-124",
-    summary: "st_VendorLetters",
+    key: "RWT-326",
+    summary:
+      "Vendor Circle – Documents replaced via the Vendor Updates tab are not retained in the vendor history panel",
     status: "QA In Progress",
-    category: "ORM regression automation",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-124",
+    category: "Bug",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-326",
   },
   {
-    key: "RWT-501",
-    summary: "Static top Nav Bar across the application",
-    status: "QA Ready",
+    key: "RWT-512",
+    summary: "Show a clear status on every review",
+    status: "QA In Progress",
     category: "Parachute Standalone",
     priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-501",
-  },
-  {
-    key: "RWT-504",
-    summary: "Left navigation bar",
-    status: "QA Ready",
-    category: "Parachute Standalone",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-504",
-  },
-  {
-    key: "RWT-505",
-    summary: '"Start a Review" entry point',
-    status: "QA Ready",
-    category: "Parachute Standalone",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-505",
-  },
-  {
-    key: "RWT-506",
-    summary: "Upload a report by file picker or drag and drop",
-    status: "QA Ready",
-    category: "Parachute Standalone",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-506",
-  },
-  {
-    key: "RWT-507",
-    summary: "Review Setup step before the AI runs",
-    status: "QA Ready",
-    category: "Parachute Standalone",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-507",
-  },
-  {
-    key: "RWT-516",
-    summary: "View the generated report in-product",
-    status: "QA Ready",
-    category: "Parachute Standalone",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-516",
-  },
-  {
-    key: "RWT-521",
-    summary: "Edit the text of the generated document",
-    status: "QA Ready",
-    category: "Parachute Standalone",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-521",
-  },
-  {
-    key: "RWT-523",
-    summary: "Source link on every generated statement",
-    status: "QA Ready",
-    category: "Parachute Standalone",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-523",
+    url: "https://realwired.atlassian.net/browse/RWT-512",
   },
   {
     key: "RWT-524",
     summary: "Render charts inside the generated workbook",
-    status: "QA Ready",
+    status: "QA In Progress",
     category: "Parachute Standalone",
     priority: "Medium",
     url: "https://realwired.atlassian.net/browse/RWT-524",
   },
   {
-    key: "RWT-525",
-    summary: "Preview mode in the Workbook Editor",
-    status: "QA Ready",
-    category: "Parachute Standalone",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-525",
+    key: "RWT-685",
+    summary:
+      "YouConnect: guardrails before a Parachute AI Review can be run (file must be a reviewable PDF; commercial appraisals only)",
+    status: "QA In Progress",
+    category: "Story",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-685",
   },
   {
-    key: "RWT-526",
-    summary: "Render the whole document on screen in Preview",
-    status: "QA Ready",
+    key: "RWT-712",
+    summary: "Handle a session that ends mid-use",
+    status: "QA In Progress",
     category: "Parachute Standalone",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-526",
+    priority: "Low",
+    url: "https://realwired.atlassian.net/browse/RWT-712",
   },
   {
-    key: "RWT-527",
-    summary: "View Source mode in the Workbook Editor",
-    status: "QA Ready",
-    category: "Parachute Standalone",
+    key: "RWT-804",
+    summary:
+      "Citation links resolve to nothing when the appraisal prints its folio in the running head — 0 of 130 pages mapped on the dev review",
+    status: "QA In Progress",
+    category: "Sub-task",
     priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-527",
+    url: "https://realwired.atlassian.net/browse/RWT-804",
   },
   {
-    key: "RWT-528",
-    summary: "Open the source document at the page the data came from",
+    key: "RWT-481",
+    summary: "Vendor Circle — change Gregry Schmid's primary email to greg.schmid@nmrk.com",
     status: "QA Ready",
-    category: "Parachute Standalone",
+    category: "Task",
     priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-528",
+    url: "https://realwired.atlassian.net/browse/RWT-481",
   },
   {
-    key: "RWT-610",
-    summary: "[FE] Polish editor to cover all the uncontrolled cases without breaking the styles",
+    key: "RWT-612",
+    summary:
+      "United Bank (bankwithunited) — provide proof of delivery for Comment emails Tammie reports not receiving (ZD 8853)",
     status: "QA Ready",
-    category: "Parachute Standalone",
+    category: "Task",
     priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-610",
+    url: "https://realwired.atlassian.net/browse/RWT-612",
+  },
+  {
+    key: "RWT-658",
+    summary:
+      "City Bank — Vendor Jeff White: correct Primary Email on the vendor profile and the Vendor Circle record (ZD 8922)",
+    status: "QA Ready",
+    category: "Task",
+    priority: "Medium",
+    url: "https://realwired.atlassian.net/browse/RWT-658",
+  },
+  {
+    key: "RWT-661",
+    summary:
+      "Vendor Circle — revert the displayed Primary Email on two Cody Jetton profiles so it matches each profile's login email (ZD 8056)",
+    status: "QA Ready",
+    category: "Task",
+    priority: "High",
+    url: "https://realwired.atlassian.net/browse/RWT-661",
   },
 ];
 
@@ -639,27 +808,10 @@ export const ormAutomationEpic = {
   url: "https://realwired.atlassian.net/browse/RWT-107",
 };
 
-/** Epic RWT-107 tasks carried into Sprint 33 (live Jira Sep 1, 2026). */
-export const sprintOrmAutomationInSprint: SprintTicket[] = [
-  {
-    key: "RWT-126",
-    summary: "User Management",
-    status: "Done",
-    category: "ORM regression automation",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-126",
-  },
-  {
-    key: "RWT-124",
-    summary: "st_VendorLetters",
-    status: "QA In Progress",
-    category: "ORM regression automation",
-    priority: "Medium",
-    url: "https://realwired.atlassian.net/browse/RWT-124",
-  },
-];
+/** Epic RWT-107 tasks in the open sprint (live Jira REST Sep 18, 2026). Empty — epic is fully Done. */
+export const sprintOrmAutomationInSprint: SprintTicket[] = [];
 
-/** Epic RWT-107 children in Done (live Jira Sep 1, 2026). */
+/** Epic RWT-107 children in Done (live Jira REST Sep 18, 2026). */
 export const ormCompletedModules: SprintTicket[] = [
   {
     key: "RWT-109",
@@ -804,6 +956,12 @@ export const ormCompletedModules: SprintTicket[] = [
     summary: "St_Vendor",
     status: "Done",
     url: "https://realwired.atlassian.net/browse/RWT-111",
+  },
+  {
+    key: "RWT-124",
+    summary: "st_VendorLetters",
+    status: "Done",
+    url: "https://realwired.atlassian.net/browse/RWT-124",
   },
   {
     key: "RWT-128",

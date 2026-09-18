@@ -30,7 +30,7 @@ function ChartTooltip({
       <p className="mb-1 text-sm font-semibold text-text">{label}</p>
       {row && (
         <p className="mb-2 text-xs text-text-muted">
-          {row.resolutionRate}% resolution rate (resolved ÷ created)
+          {row.resolutionRate}% close-out vs intake (Done ÷ created)
         </p>
       )}
       {payload.map((entry) => (

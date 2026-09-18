@@ -39,6 +39,8 @@ function ChartTooltip({
 
 export function BugTrendChart() {
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
+  const ytdDetected = bugsByMonth.reduce((sum, m) => sum + m.detected, 0);
+  const ytdResolved = bugsByMonth.reduce((sum, m) => sum + m.resolved, 0);
 
   const toggleProject = (projectId: string) => {
     setExpandedProject((current) => (current === projectId ? null : projectId));
@@ -51,7 +53,7 @@ export function BugTrendChart() {
         <div>
           <h2 className="text-lg font-semibold text-text">Bugs Detected & Resolved</h2>
           <p className="mt-0.5 text-sm text-text-muted">
-            Year-to-date · product bugs across all five projects · Jan – Aug 2026
+            Year-to-date · product bugs across all five projects · Jan – Sep 2026
           </p>
         </div>
       </div>
@@ -80,8 +82,9 @@ export function BugTrendChart() {
 
       <p className="mt-4 rounded-lg border border-border-subtle bg-surface-overlay px-3 py-2 text-xs leading-relaxed text-text-muted">
         Detected = Bug tickets whose Jira Created date falls in that month, counted across YP,
-        YCVC, RM, ARF and RWT so the trend is comparable month to month. Verified Jira pull Sep 1,
-        2026: 164 detected · 92 resolved YTD. August excludes 8 infrastructure tickets.
+        YCVC, RM, ARF and RWT so the trend is comparable month to month. Jira REST Sep 18,
+        2026: {ytdDetected} detected · {ytdResolved} resolved YTD. August excludes 8 infrastructure
+        tickets; September excludes 4.
       </p>
 
       <div className="mt-6 border-t border-border-subtle pt-5">

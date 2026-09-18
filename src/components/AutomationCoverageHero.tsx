@@ -1,5 +1,5 @@
 import { Target } from "lucide-react";
-import { automationRunSummary } from "../data/metrics";
+import { appWideCoverageBreakdown, automationRunSummary } from "../data/metrics";
 
 function CoverageMetric({
   title,
@@ -42,9 +42,11 @@ function CoverageMetric({
         <div className="text-right">
           <p className={`text-sm font-medium ${accentClass}`}>{target}% target</p>
           <p className="text-xs text-text-muted">
-            {current >= target
-              ? `${current - target} pts past target`
-              : `${target - current} pts remaining`}
+            {current > target
+              ? `${current - target} pt${current - target === 1 ? "" : "s"} past target`
+              : current === target
+                ? "target met"
+                : `${target - current} pts remaining`}
           </p>
         </div>
       </div>
@@ -54,19 +56,27 @@ function CoverageMetric({
           <span>Progress toward target</span>
           <span>{progressPct}% of goal</span>
         </div>
-        <div className="relative h-3 overflow-hidden rounded-full bg-surface">
-          <div
-            className={`absolute inset-y-0 left-0 rounded-full transition-all ${barClass}`}
-            style={{ width: `${Math.min(current, 100)}%` }}
-          />
-          <div
-            className={`absolute inset-y-0 w-0.5 ${markerClass}`}
-            style={{ left: `${markerLeft}%` }}
-            title={`${target}% target`}
-          />
-        </div>
-        <div className="mt-1 flex justify-end">
-          <span className="text-[10px] text-text-muted">▲ {target}% target</span>
+        <div className="relative pb-5">
+          <div className="relative h-3 rounded-full bg-surface">
+            <div
+              className={`absolute inset-y-0 left-0 rounded-full transition-all ${barClass}`}
+              style={{ width: `${Math.min(current, 100)}%` }}
+            />
+            <div
+              className={`absolute -top-1 h-5 w-0.5 rounded-full ${markerClass}`}
+              style={{ left: `${markerLeft}%`, transform: "translateX(-50%)" }}
+              title={`${target}% target`}
+            />
+          </div>
+          <span
+            className="absolute mt-1 whitespace-nowrap text-[10px] text-text-muted"
+            style={{
+              left: `${markerLeft}%`,
+              transform: markerLeft >= 96 ? "translateX(-100%)" : "translateX(-50%)",
+            }}
+          >
+            ▲ {target}% target
+          </span>
         </div>
       </div>
     </div>
@@ -89,8 +99,9 @@ export function AutomationCoverageHero() {
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
         <CoverageMetric
           title="Overall Automation Coverage"
-          subtitle={`App-wide · target ${automationRunSummary.appWideAutomationTargetPercent}%`}
+          subtitle={`28 in-scope modules · target ${automationRunSummary.appWideAutomationTargetPercent}%`}
           current={automationRunSummary.appWideAutomationPercent}
+          previous={automationRunSummary.appWideAutomationPrevious}
           target={automationRunSummary.appWideAutomationTargetPercent}
           accentClass="text-accent"
           barClass="bg-accent"
@@ -98,7 +109,7 @@ export function AutomationCoverageHero() {
         />
         <CoverageMetric
           title="Critical Workflow Automation Coverage"
-          subtitle={`Request Lifecycle · target ${automationRunSummary.criticalWorkflowAutomationTargetPercent}%`}
+          subtitle={`${automationRunSummary.criticalWorkflowLabel} · target ${automationRunSummary.criticalWorkflowAutomationTargetPercent}%`}
           current={automationRunSummary.criticalWorkflowAutomationMid}
           previous={automationRunSummary.criticalWorkflowAutomationPrevious}
           target={automationRunSummary.criticalWorkflowAutomationTargetPercent}
@@ -107,6 +118,12 @@ export function AutomationCoverageHero() {
           markerClass="bg-violet-300"
         />
       </div>
+
+      <p className="mt-6 text-xs leading-relaxed text-text-muted">
+        {appWideCoverageBreakdown.full} full · {appWideCoverageBreakdown.partial}{" "}
+        partial · {appWideCoverageBreakdown.none} none ·{" "}
+        {appWideCoverageBreakdown.scopeNote}
+      </p>
     </section>
   );
 }

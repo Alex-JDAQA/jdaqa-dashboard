@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import type { ViewMode, YtdSubView } from "../data/metrics";
 
-const sprintSections = [{ id: "overview", label: "KPIs" }] as const;
+const sprintSections = [
+  { id: "overview", label: "KPIs" },
+  { id: "quality", label: "Quality" },
+] as const;
 
 const ytdOverviewSections = [
   { id: "overview", label: "KPIs" },
+  { id: "quality", label: "Quality" },
   { id: "portfolio", label: "Throughput" },
   { id: "bugs", label: "Bugs" },
   { id: "coverage", label: "Coverage" },
@@ -12,6 +16,7 @@ const ytdOverviewSections = [
 
 const ytdAutomationSections = [
   { id: "auto-overview", label: "Overview" },
+  { id: "modules", label: "Modules" },
   { id: "orm", label: "ORM" },
   { id: "runs", label: "Runs" },
   { id: "by-project", label: "By Project" },

@@ -149,6 +149,9 @@ export function ProjectCoverage() {
                     )}
                 </span>
               )}
+              {project.automationTestsLabel && (
+                <span className="text-violet-400">{project.automationTestsLabel}</span>
+              )}
             </div>
 
             <p className="mt-3 flex-1 text-xs leading-relaxed text-text-muted">{project.highlight}</p>

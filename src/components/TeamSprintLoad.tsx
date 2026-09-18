@@ -9,9 +9,9 @@ export function TeamSprintLoad() {
     sprintOrmProgress.currentWindowDone.length +
     sprintOrmProgress.currentWindowInQa.length +
     sprintOrmProgress.currentWindowInProgress.length;
-  const windowDonePct = Math.round(
-    (sprintOrmProgress.currentWindowDone.length / windowTotal) * 100,
-  );
+  const windowDonePct = windowTotal
+    ? Math.round((sprintOrmProgress.currentWindowDone.length / windowTotal) * 100)
+    : 0;
 
   return (
     <section className="rounded-2xl border border-border bg-surface-raised p-6">
@@ -117,7 +117,9 @@ export function TeamSprintLoad() {
               {sprintMeta.currentSprint.name} progress
             </p>
             <span className="text-xs text-text-muted">
-              {sprintOrmProgress.currentWindowDone.length}/{windowTotal} Done · {windowDonePct}%
+              {windowTotal === 0
+                ? "none in this sprint"
+                : `${sprintOrmProgress.currentWindowDone.length}/${windowTotal} Done · ${windowDonePct}%`}
             </span>
           </div>
           <ModuleGroup

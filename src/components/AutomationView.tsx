@@ -2,12 +2,16 @@ import { AutomationByProject } from "./AutomationByProject";
 import { AutomationCoverageHero } from "./AutomationCoverageHero";
 import { AutomationRunResults } from "./AutomationRunResults";
 import { TeamSprintLoad } from "./TeamSprintLoad";
+import { YouConnectCoverageModules } from "./YouConnectCoverageModules";
 
 export function AutomationView() {
   return (
     <div className="space-y-8">
       <div id="auto-overview" className="scroll-mt-24">
         <AutomationCoverageHero />
+      </div>
+      <div id="modules" className="scroll-mt-24">
+        <YouConnectCoverageModules />
       </div>
       <div id="orm" className="scroll-mt-24">
         <TeamSprintLoad />

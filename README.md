@@ -13,18 +13,52 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Updating Metrics
 
-All dashboard data lives in a single file:
+The dashboard is still a static Vite app. Numbers live in:
 
 ```
 src/data/metrics.ts
+src/data/sprintTickets.ts
 ```
 
-Edit values manually (pull from Jira / Playwright reports as needed), then rebuild. There is no live refresh path yet.
+Refresh them in Cursor against **Jira REST** (`mcp-atlassian`), not Rovo. Ask: “refresh the QA dashboard from Jira REST.” The agent runs the JQL below, then edits those files. There is no live browser fetch (that would expose the API token).
+
+Automation / Playwright run results are still pasted from CI reports.
+
+### Jira REST connection
+
+Local only — the token is not in this repo:
+
+- Site: `https://realwired.atlassian.net`
+- MCP: `mcp-atlassian` in `~/.cursor/mcp.json` (launches `~/.cursor/jira-mcp-launch.sh`)
+- Credentials: `~/.config/jira-mcp/env` (`JIRA_URL`, `JIRA_USERNAME`, `JIRA_API_TOKEN`)
+
+If search starts failing with 401, the Atlassian email in that file must match the account that created the token (for this site: `alex@realwired.com`).
+
+### Canonical JQL
+
+Exclude Xray artifacts everywhere: `"Test", "Test Execution", "Test Plan", "Test Set", "Precondition"`.
+
+| Slice | Query |
+| --- | --- |
+| Open sprint | `project = RWT AND sprint in openSprints()` |
+| In QA | same, plus `status in ("QA Ready", "QA In Progress")` |
+| Sprint Done | `project = RWT AND sprint in openSprints() AND status = Done` |
+| ORM epic | `parent = RWT-107` |
+| Portfolio created in a month | `project in (YP, YCVC, RM, ARF, RWT) AND created >= "YYYY-MM-01" AND created < "YYYY-MM-01" AND issuetype NOT IN ("Test", "Test Execution", "Test Plan", "Test Set", "Precondition")` |
+| Portfolio Done in a month | `status CHANGED TO Done` in that month, same project + issue-type filter. Do not trust `resolutiondate` here. |
+| QA-lane resolved | `qaResolvedJql` in `src/data/metrics.ts` — `status CHANGED TO Done` in the YTD window AND assignee WAS the five JDAQA account IDs. Do not use `resolved` / `resolutiondate`; that field is empty on most RWT tickets. |
+| Bugs in a month | `issuetype = Bug` across the five projects by created date; August still excludes the documented infrastructure tickets |
+| Open High / Highest | Same bug filter, `created >= "2026-01-01" AND statusCategory != Done AND priority in (Highest, High)` |
+| QA bounce-back | Changelog on issues where `status WAS IN ("QA Ready", "QA In Progress") AFTER "2026-01-01"` — a later return after leaving the lane |
+| Time in QA | Same changelog set; median consecutive time in the QA lane, visits ≥1 hour |
+
+Board **271** is the RWT Consolidated delivery board. Reporting window stays January–YTD unless someone asks to change it.
 
 Key exports:
 
 - **sprintKpiCards** — current sprint operational KPIs
 - **ytdKpiCards** — year-to-date leadership KPIs
+- **qualityMetrics** (`src/data/qualityMetrics.ts`) — severity, bounce-back, time-in-QA, defects per Done
 - **portfolioByMonth** — project throughput (created vs Done)
 - **portfolioByProject** — per-project YTD throughput drill-down
 - **bugsByMonth** / **bugsByProject** — YTD bug trend + per-project drill-down
@@ -36,8 +70,8 @@ Key exports:
 
 | View | Description |
 |------|-------------|
-| **Sprint** | Current operational snapshot — in QA right now, prior sprint delivered, bugs, ORM summary |
-| **Year-to-Date → Overview** | Leadership view — throughput chart, YTD bug trends, coverage summary |
+| **Sprint** | Current operational snapshot — in QA right now, quality signals, bugs, ORM summary |
+| **Year-to-Date → Overview** | Leadership view — quality signals, throughput chart, YTD bug trends, coverage summary |
 | **Year-to-Date → Automation** | Automation hub — 85% target bar, ORM progress, run results, per-project automation |
 
 ## Point-in-time archive

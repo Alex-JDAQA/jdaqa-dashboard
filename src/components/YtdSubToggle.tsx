@@ -15,7 +15,7 @@ export function YtdSubToggle({
     >
       {(
         [
-          { id: "overview" as const, label: "Overview", hint: "Throughput & bugs" },
+          { id: "overview" as const, label: "Overview", hint: "Quality & throughput" },
           { id: "automation" as const, label: "Automation", hint: "Coverage & runs" },
         ] as const
       ).map((option) => {

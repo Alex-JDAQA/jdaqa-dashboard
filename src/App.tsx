@@ -6,6 +6,7 @@ import { YtdSubToggle } from "./components/YtdSubToggle";
 import { KpiGrid } from "./components/KpiGrid";
 import { PortfolioChart } from "./components/PortfolioChart";
 import { BugMetrics } from "./components/BugMetrics";
+import { QualitySignals } from "./components/QualitySignals";
 import { SprintThroughputBurnup } from "./components/SprintThroughputBurnup";
 import { BugTrendChart } from "./components/BugTrendChart";
 import { ProjectCoverage } from "./components/ProjectCoverage";
@@ -58,6 +59,9 @@ export default function App() {
                 {sprintMeta.currentSprint.daysTotal}
               </p>
               <KpiGrid cards={sprintKpiCards} />
+              <div id="quality" className="scroll-mt-24">
+                <QualitySignals view="sprint" />
+              </div>
               <BugMetrics metrics={sprintBugMetrics} />
               <SprintThroughputBurnup />
             </div>
@@ -67,9 +71,12 @@ export default function App() {
             <>
               <div id="overview" className="scroll-mt-24 space-y-3">
                 <p className="text-sm text-text-muted">
-                  Year-to-date portfolio throughput, bugs, and coverage
+                  Year-to-date quality, portfolio throughput, bugs, and coverage
                 </p>
                 <KpiGrid cards={ytdKpiCards} />
+              </div>
+              <div id="quality" className="scroll-mt-24">
+                <QualitySignals view="ytd" />
               </div>
               <div id="portfolio" className="scroll-mt-24">
                 <PortfolioChart />
@@ -86,7 +93,7 @@ export default function App() {
           {isYtd && ytdSubView === "automation" && <AutomationView />}
         </main>
         <footer className="mt-16 border-t border-border-subtle py-6 text-center text-sm text-text-muted">
-          JDAQA · RealWired · Sprint + year-to-date velocity · 6-month point-in-time report archived
+          JDAQA · RealWired · Sprint + year-to-date quality and velocity · 6-month point-in-time report archived
           at tag <code className="text-accent">point-in-time-6mo-contract</code>
         </footer>
       </div>

@@ -74,7 +74,9 @@ export function AutomationByProject() {
               <div className="rounded-lg bg-surface p-3">
                 <p className="text-xs text-text-muted">Automated tests</p>
                 <p className="mt-1 font-mono font-semibold text-text">
-                  {project.automationTests ?? 0}
+                  {project.automationTests != null
+                    ? project.automationTests
+                    : (project.automationTestsLabel ?? 0)}
                 </p>
                 {project.automationTests != null &&
                   project.automationTestsPrevious != null &&
@@ -105,6 +107,12 @@ export function AutomationByProject() {
                 <span className="inline-flex items-center gap-1.5 text-violet-400">
                   <Bot className="h-4 w-4" />
                   {project.automationTests} Playwright tests
+                </span>
+              )}
+              {project.automationTestsLabel && (
+                <span className="inline-flex items-center gap-1.5 text-violet-400">
+                  <Bot className="h-4 w-4" />
+                  {project.automationTestsLabel}
                 </span>
               )}
             </div>

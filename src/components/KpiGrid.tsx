@@ -40,6 +40,9 @@ function KpiCardView({ kpi }: { kpi: KpiCard }) {
       }`}
     >
       <p className="text-sm font-medium text-text-muted">{kpi.label}</p>
+      {kpi.description && (
+        <p className="mt-1 text-xs leading-relaxed text-text">{kpi.description}</p>
+      )}
       <div className="mt-3 flex items-baseline gap-1">
         <span className="text-3xl font-bold tracking-tight text-text">
           {typeof kpi.value === "number"

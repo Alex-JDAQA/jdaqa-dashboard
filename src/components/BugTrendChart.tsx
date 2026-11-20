@@ -53,7 +53,7 @@ export function BugTrendChart() {
         <div>
           <h2 className="text-lg font-semibold text-text">Bugs Detected & Resolved</h2>
           <p className="mt-0.5 text-sm text-text-muted">
-            Year-to-date · product bugs across all five projects · Jan – Sep 2026
+            Year-to-date · product bugs across all five projects · Jan 1 – Nov 20, 2026
           </p>
         </div>
       </div>
@@ -82,9 +82,12 @@ export function BugTrendChart() {
 
       <p className="mt-4 rounded-lg border border-border-subtle bg-surface-overlay px-3 py-2 text-xs leading-relaxed text-text-muted">
         Detected = Bug tickets whose Jira Created date falls in that month, counted across YP,
-        YCVC, RM, ARF and RWT so the trend is comparable month to month. Jira REST Sep 18,
-        2026: {ytdDetected} detected · {ytdResolved} resolved YTD. August excludes 8 infrastructure
-        tickets; September excludes 4.
+        YCVC, RM, ARF and RWT so the trend is comparable month to month. Resolved means status
+        is Done today. Jira REST Nov 20, 2026. {ytdDetected} detected · {ytdResolved} resolved
+        YTD. August excludes 8 infrastructure tickets; September excludes 4. October and
+        November exclude epic RWT-1195. November also excludes sample epic RWT-1504.
+        November's write-up is the Nov 20 read of 19. October's write-up stays the Oct 30
+        read of 39.
       </p>
 
       <div className="mt-6 border-t border-border-subtle pt-5">
@@ -131,7 +134,7 @@ export function BugTrendChart() {
 
                 {isExpanded && (
                   <div className="border-t border-border-subtle px-4 py-3">
-                    <div className="grid grid-cols-4 gap-2 text-center text-xs sm:grid-cols-8">
+                    <div className="grid grid-cols-4 gap-2 text-center text-xs sm:grid-cols-6 lg:grid-cols-11">
                       {project.months.map((month) => (
                         <div key={month.month} className="rounded-lg bg-surface p-2">
                           <p className="text-text-muted">{month.month}</p>

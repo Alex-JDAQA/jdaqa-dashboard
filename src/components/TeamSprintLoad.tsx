@@ -103,13 +103,17 @@ export function TeamSprintLoad() {
           <p className="text-xs font-medium tracking-wide text-text-muted uppercase">
             {`Closed in prior window (${sprintMeta.previousSprint.range})`}
           </p>
-          <ul className="mt-2 space-y-1">
-            {sprintOrmProgress.priorWindowDelivered.map((item) => (
-              <li key={item} className="text-sm text-text">
-                · {item}
-              </li>
-            ))}
-          </ul>
+          {sprintOrmProgress.priorWindowDelivered.length === 0 ? (
+            <p className="mt-2 text-sm text-text-muted">None</p>
+          ) : (
+            <ul className="mt-2 space-y-1">
+              {sprintOrmProgress.priorWindowDelivered.map((item) => (
+                <li key={item} className="text-sm text-text">
+                  · {item}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-overlay p-4">
           <div className="flex items-center justify-between gap-2">

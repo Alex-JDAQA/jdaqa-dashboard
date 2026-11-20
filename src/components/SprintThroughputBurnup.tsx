@@ -32,7 +32,7 @@ export function SprintThroughputBurnup() {
 
   const deliveredPct = (deliveredItems / benchmarkItems) * 100;
   const timePct = (daysElapsed / daysTotal) * 100;
-  const remainingItems = benchmarkItems - deliveredItems;
+  const aheadBy = deliveredItems - benchmarkItems;
   const pace = paceLabel(deliveredPct, timePct);
 
   return (
@@ -68,12 +68,14 @@ export function SprintThroughputBurnup() {
       <div className="mt-5">
         <div className="mb-2 flex justify-between text-xs text-text-muted">
           <span>Pace — {Math.round(deliveredPct)}% of the prior window's close-outs</span>
-          <span>{remainingItems} to match it</span>
+          <span>
+            {aheadBy > 0 ? `${aheadBy} past the prior window` : `${-aheadBy} to match it`}
+          </span>
         </div>
         <div className="relative h-4 overflow-hidden rounded-full bg-surface">
           <div
             className="absolute inset-y-0 left-0 rounded-full bg-success transition-all"
-            style={{ width: `${deliveredPct}%` }}
+            style={{ width: `${Math.min(deliveredPct, 100)}%` }}
             title={`${deliveredItems} items Done`}
           />
           <div
@@ -135,6 +137,9 @@ export function SprintThroughputBurnup() {
                       {ticket.key}
                       <ExternalLink className="h-3 w-3" />
                     </a>
+                    <span className="rounded bg-surface px-2 py-0.5 text-[11px] text-text-muted">
+                      {ticket.status}
+                    </span>
                     {ticket.category && (
                       <span className="rounded bg-surface px-2 py-0.5 text-[11px] text-text-muted">
                         {ticket.category}

@@ -9,11 +9,13 @@ import { BugMetrics } from "./components/BugMetrics";
 import { QualitySignals } from "./components/QualitySignals";
 import { SprintThroughputBurnup } from "./components/SprintThroughputBurnup";
 import { BugTrendChart } from "./components/BugTrendChart";
+import { MonthlyBugBrief } from "./components/MonthlyBugBrief";
 import { ProjectCoverage } from "./components/ProjectCoverage";
 import { AutomationView } from "./components/AutomationView";
 import {
   type ViewMode,
   type YtdSubView,
+  monthlyBugBriefs,
   sprintBugMetrics,
   sprintKpiCards,
   sprintMeta,
@@ -71,9 +73,9 @@ export default function App() {
             <>
               <div id="overview" className="scroll-mt-24 space-y-3">
                 <p className="text-sm text-text-muted">
-                  Year-to-date quality, portfolio throughput, bugs, and coverage
+                  Year-to-date quality, RWT throughput, bugs, and coverage
                 </p>
-                <KpiGrid cards={ytdKpiCards} />
+                <KpiGrid cards={ytdKpiCards} columns={2} />
               </div>
               <div id="quality" className="scroll-mt-24">
                 <QualitySignals view="ytd" />
@@ -81,8 +83,11 @@ export default function App() {
               <div id="portfolio" className="scroll-mt-24">
                 <PortfolioChart />
               </div>
-              <div id="bugs" className="scroll-mt-24">
+              <div id="bugs" className="scroll-mt-24 space-y-8">
                 <BugTrendChart />
+                {monthlyBugBriefs.map((brief) => (
+                  <MonthlyBugBrief key={brief.id} brief={brief} />
+                ))}
               </div>
               <div id="coverage" className="scroll-mt-24">
                 <ProjectCoverage />

@@ -5,15 +5,18 @@ import {
   ExternalLink,
   ShieldAlert,
 } from "lucide-react";
+import { KpiGrid } from "./KpiGrid";
 import { isHighPriority } from "../data/sprintTickets";
 import {
   openHighBugs,
   postQaWait,
+  postQaWaitTickets,
   qaBounce,
-  severityMix,
+  qualityQuarterCards,
+  sprintOpenHigh,
+  sprintOpenHighBugs,
   sprintQaBounceTickets,
   timeInQa,
-  youConnectVolume,
   type QualityTicket,
 } from "../data/qualityMetrics";
 
@@ -28,19 +31,19 @@ export function QualitySignals({ view }: { view: "sprint" | "ytd" }) {
           <h2 className="text-lg font-semibold text-text">Quality signals</h2>
           <p className="mt-0.5 text-sm text-text-muted">
             {isSprint
-              ? "Sprint 35 · bounce-back, post-QA wait, and open High bugs — Jira REST, not velocity"
-              : "Year-to-date · severity, YouConnect defect volume, QA-lane dwell — Jira REST changelog / JQL"}
+              ? `${sprintOpenHigh.sprintName} · bounce-back, post-QA wait, and open High bugs`
+              : "By quarter"}
           </p>
         </div>
       </div>
 
       {isSprint ? <SprintQuality /> : <YtdQuality />}
 
-      <p className="mt-5 text-xs leading-relaxed text-text-muted">
-        {isSprint
-          ? `${qaBounce.sourceNote} ${postQaWait.sourceNote} Median time in QA is the YTD process figure (visits ≥1 hour).`
-          : `${youConnectVolume.sourceNote} ${severityMix.sourceNote} Escaped-to-prod is not on this board: Environment is empty on every YTD bug.`}
-      </p>
+      {!isSprint && (
+        <p className="mt-5 text-xs text-text-muted">
+          Jira REST · November 20, 2026. Bounce-back and time in QA were last counted October 30.
+        </p>
+      )}
     </section>
   );
 }
@@ -65,9 +68,9 @@ function SprintQuality() {
         />
         <Stat
           label="Open High / Highest"
-          value={severityMix.openHighAndHighest}
-          meaning="Product bugs created this year that are still open and marked High or Highest."
-          hint={`${severityMix.openHighest} Highest · median age ${severityMix.medianAgeDays}d · YTD-created, still open`}
+          value={sprintOpenHigh.openHighAndHighest}
+          meaning={`${sprintOpenHigh.sprintName} product bugs that are still open and marked High or Highest.`}
+          hint={`${sprintOpenHigh.openHighest} Highest · ${sprintOpenHigh.openHigh} High · median age ${sprintOpenHigh.medianAgeDays}d · status not Done`}
           accent="danger"
         />
         <Stat
@@ -75,66 +78,21 @@ function SprintQuality() {
           value={timeInQa.medianDaysGe1h}
           unit="days"
           meaning="Typical time a ticket spends in QA Ready / QA In Progress. Sub-minute board clicks are excluded."
-          hint="YTD process · visits lasting ≥1 hour (n=267)"
+          hint={`YTD process · visits lasting ≥1 hour (n=${timeInQa.visitsAtLeastOneHour})`}
           accent="violet"
         />
       </div>
       <TicketFold tickets={sprintQaBounceTickets} label="Returned to the QA lane" />
-      <TicketFold tickets={openHighBugs} label="Highest still open" />
+      <TicketFold tickets={postQaWaitTickets} label="Waiting past QA" />
+      <TicketFold tickets={sprintOpenHighBugs} label="Open High / Highest in this sprint" />
     </div>
   );
 }
 
 function YtdQuality() {
-  const highShare = Math.round(
-    (severityMix.openHighAndHighest / severityMix.productOpenYtd) * 100,
-  );
-
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat
-          label="Open High / Highest"
-          value={highShare}
-          unit="%"
-          meaning="Share of still-open YTD product bugs that are marked High or Highest."
-          hint={`${severityMix.openHighAndHighest} of ${severityMix.productOpenYtd} still open · ${severityMix.openHighest} Highest · ${severityMix.agedOver30} older than 30 days`}
-          accent="danger"
-        />
-        <Stat
-          label="YouConnect share"
-          value={youConnectVolume.sharePercent}
-          unit="%"
-          meaning="Share of YTD product bugs that are YouConnect product defects."
-          hint={`${youConnectVolume.bugs} of ${youConnectVolume.productBugsYtd} product bugs · ${youConnectVolume.ypCount} YP · ${youConnectVolume.rwtCount} RWT`}
-          accent="warning"
-        />
-        <Stat
-          label="YouConnect still open"
-          value={youConnectVolume.unresolvedPercent}
-          unit="%"
-          meaning="Share of those YouConnect product bugs that are still not Done. Not escaped-to-prod."
-          hint={`${youConnectVolume.open} of ${youConnectVolume.bugs} still open · statusCategory != Done`}
-          accent="amber"
-        />
-        <Stat
-          label="QA bounce-back"
-          value={qaBounce.bounceRatePercent}
-          unit="%"
-          meaning="Share of tickets that entered QA, left the lane, then came back later."
-          hint={`${qaBounce.bouncedYtd} of ${qaBounce.enteredQaYtd} tickets that entered QA came back after leaving`}
-          accent="amber"
-        />
-        <Stat
-          label="Median time in QA"
-          value={timeInQa.medianDaysGe1h}
-          unit="days"
-          meaning="Typical time a ticket spends in QA Ready / QA In Progress. Sub-minute board clicks are excluded."
-          hint={`${timeInQa.subMinuteVisits} sub-minute board clicks excluded from ${timeInQa.completedVisits} visits`}
-          accent="violet"
-        />
-      </div>
-
+      <KpiGrid cards={qualityQuarterCards} columns={2} />
       <TicketFold tickets={openHighBugs} label="Highest still open" />
     </div>
   );
@@ -151,7 +109,7 @@ function Stat({
   label: string;
   value: string | number;
   unit?: string;
-  meaning: string;
+  meaning?: string;
   hint: string;
   accent: "warning" | "amber" | "danger" | "violet";
 }) {
@@ -165,8 +123,8 @@ function Stat({
   return (
     <div className={`rounded-xl border bg-surface-overlay p-4 ${bar}`}>
       <p className="text-xs font-medium tracking-wide text-text-muted uppercase">{label}</p>
-      <p className="mt-1 text-xs leading-relaxed text-text">{meaning}</p>
-      <p className="mt-3 flex items-baseline gap-1">
+      {meaning && <p className="mt-1 text-xs leading-relaxed text-text">{meaning}</p>}
+      <p className={`flex items-baseline gap-1 ${meaning ? "mt-3" : "mt-2"}`}>
         <span className="text-3xl font-bold text-text">
           {typeof value === "number" && unit === "%"
             ? value.toFixed(value % 1 === 0 ? 0 : 1)
@@ -233,6 +191,9 @@ function TicketFold({ tickets, label }: { tickets: QualityTicket[]; label: strin
                 <span className="rounded bg-surface px-2 py-0.5 text-[11px] text-text-muted">
                   {ticket.status}
                 </span>
+                {ticket.qaOwner && (
+                  <span className="text-[11px] text-text-muted">QA Owner: {ticket.qaOwner}</span>
+                )}
                 {ticket.ageDays != null && (
                   <span className="text-[11px] text-text-muted">{ticket.ageDays}d open</span>
                 )}

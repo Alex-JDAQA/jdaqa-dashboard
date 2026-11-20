@@ -45,8 +45,8 @@ Exclude Xray artifacts everywhere: `"Test", "Test Execution", "Test Plan", "Test
 | Sprint Done | `project = RWT AND sprint in openSprints() AND status = Done` |
 | ORM epic | `parent = RWT-107` |
 | Portfolio created in a month | `project in (YP, YCVC, RM, ARF, RWT) AND created >= "YYYY-MM-01" AND created < "YYYY-MM-01" AND issuetype NOT IN ("Test", "Test Execution", "Test Plan", "Test Set", "Precondition")` |
-| Portfolio Done in a month | `status CHANGED TO Done` in that month, same project + issue-type filter. Do not trust `resolutiondate` here. |
-| QA-lane resolved | `qaResolvedJql` in `src/data/metrics.ts` — `status CHANGED TO Done` in the YTD window AND assignee WAS the five JDAQA account IDs. Do not use `resolved` / `resolutiondate`; that field is empty on most RWT tickets. |
+| Project throughput in a month | RWT only. `status CHANGED TO ("Ready for PROD", Done)` in that month, same issue-type filter. A ticket in both columns that month counts once. |
+| QA-lane resolved | `qaResolvedJql` in `src/data/metrics.ts` — `status CHANGED TO Done` in the YTD window. Through October the tester is assignee WAS the five JDAQA account IDs. From November a ticket also counts when QA Owner (`customfield_10630`) is one of those people, because the developer stays the assignee. Do not use `resolved` / `resolutiondate`; that field is empty on most RWT tickets. |
 | Bugs in a month | `issuetype = Bug` across the five projects by created date; August still excludes the documented infrastructure tickets |
 | Open High / Highest | Same bug filter, `created >= "2026-01-01" AND statusCategory != Done AND priority in (Highest, High)` |
 | QA bounce-back | Changelog on issues where `status WAS IN ("QA Ready", "QA In Progress") AFTER "2026-01-01"` — a later return after leaving the lane |
@@ -59,7 +59,7 @@ Key exports:
 - **sprintKpiCards** — current sprint operational KPIs
 - **ytdKpiCards** — year-to-date leadership KPIs
 - **qualityMetrics** (`src/data/qualityMetrics.ts`) — severity, bounce-back, time-in-QA, defects per Done
-- **portfolioByMonth** — project throughput (created vs Done)
+- **portfolioByMonth** — project throughput (created vs Ready for PROD or Done)
 - **portfolioByProject** — per-project YTD throughput drill-down
 - **bugsByMonth** / **bugsByProject** — YTD bug trend + per-project drill-down
 - **sprintBugMetrics** — sprint bug snapshot
